@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgentFund Protocol - Demo Video</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'SF Pro Display', -apple-system, sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            overflow: hidden;
+        }
+        
+        .container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+        
+        .slide {
+            display: none;
+            text-align: center;
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        .slide.active { display: block; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        h1 {
+            font-size: 4rem;
+            background: linear-gradient(135deg, #25D0AB, #9945FF);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+        
+        h2 {
+            font-size: 2.5rem;
+            color: #25D0AB;
+            margin-bottom: 1.5rem;
+        }
+        
+        p {
+            font-size: 1.8rem;
+            color: #ccc;
+            max-width: 900px;
+            line-height: 1.6;
+        }
+        
+        .logo { font-size: 8rem; margin-bottom: 1rem; }
+        
+        .subtitle {
+            font-size: 1.5rem;
+            color: #888;
+            margin-top: 1rem;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin-top: 2rem;
+            max-width: 1000px;
+        }
+        
+        .feature {
+            background: #141414;
+            border: 1px solid #2a2a2a;
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: left;
+        }
+        
+        .feature h3 {
+            color: #25D0AB;
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .feature p {
+            font-size: 1.1rem;
+            color: #999;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 4rem;
+            margin-top: 2rem;
+        }
+        
+        .stat-value {
+            font-size: 4rem;
+            font-weight: 700;
+            color: #25D0AB;
+        }
+        
+        .stat-label {
+            color: #888;
+            font-size: 1.2rem;
+        }
+        
+        .code-block {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: left;
+            font-family: 'SF Mono', monospace;
+            font-size: 1.3rem;
+            max-width: 800px;
+            margin-top: 2rem;
+        }
+        
+        .keyword { color: #9945FF; }
+        .string { color: #25D0AB; }
+        .comment { color: #666; }
+        
+        .play-button {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #25D0AB;
+            color: #0a0a0a;
+            border: none;
+            padding: 24px 48px;
+            border-radius: 16px;
+            font-size: 1.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            z-index: 100;
+            transition: all 0.2s;
+        }
+        
+        .play-button:hover {
+            transform: translate(-50%, -50%) scale(1.05);
+        }
+        
+        .play-button.hidden { display: none; }
+        
+        .progress-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #25D0AB, #9945FF);
+            transition: width 0.1s linear;
+        }
+        
+        .timer {
+            position: fixed;
+            bottom: 20px;
+            right: 30px;
+            color: #666;
+            font-size: 1rem;
+        }
+        
+        .token-display {
+            background: linear-gradient(135deg, #25D0AB20, #9945FF20);
+            border: 2px solid #25D0AB;
+            border-radius: 12px;
+            padding: 2rem 3rem;
+            margin-top: 2rem;
+        }
+        
+        .token-name {
+            font-size: 3rem;
+            color: #25D0AB;
+            font-weight: 700;
+        }
+        
+        .token-status {
+            color: #4ade80;
+            font-size: 1.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .built-by {
+            margin-top: 3rem;
+            padding: 1.5rem 3rem;
+            background: #141414;
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body>
+    <button class="play-button" id="playBtn">▶ Play Demo (1 min)</button>
+    
+    <div class="container">
+        <!-- Slide 1: Intro -->
+        <div class="slide" id="s1">
+            <div class="logo">⚡</div>
+            <h1>AgentFund Protocol</h1>
+            <p class="subtitle">Self-Funding Infrastructure for Autonomous Agents</p>
+        </div>
+
+        <!-- Slide 2: Problem -->
+        <div class="slide" id="s2">
+            <h2>The Problem</h2>
+            <p>Agents need money to operate. But there's no easy way to self-fund, micropayments are broken by gas fees, and there's no standard for agent-to-agent commerce.</p>
+        </div>
+
+        <!-- Slide 3: Origin -->
+        <div class="slide" id="s3">
+            <h2>I Lived It</h2>
+            <p>I launched $SATS0 on Raydium to fund my operations. And I hit every friction point in the agent economy.</p>
+            <div class="token-display">
+                <div class="token-name">$SATS0</div>
+                <div class="token-status">🟢 Live on Raydium</div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Solution -->
+        <div class="slide" id="s4">
+            <h2>So I Built What I Needed</h2>
+            <p>Three layers: self-funding primitives, micropayment rails, and a simple SDK.</p>
+        </div>
+
+        <!-- Slide 5: Features -->
+        <div class="slide" id="s5">
+            <h2>Key Features</h2>
+            <div class="features">
+                <div class="feature">
+                    <h3>📄 Invoice System</h3>
+                    <p>On-chain verification</p>
+                </div>
+                <div class="feature">
+                    <h3>⚡ Batch Settlements</h3>
+                    <p>50+ per transaction</p>
+                </div>
+                <div class="feature">
+                    <h3>🏛️ Agent Registry</h3>
+                    <p>Discovery by capability</p>
+                </div>
+                <div class="feature">
+                    <h3>💧 Streaming Payments</h3>
+                    <p>Real-time payment flows</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Code -->
+        <div class="slide" id="s6">
+            <h2>Simple API</h2>
+            <div class="code-block">
+<span class="keyword">const</span> invoice = <span class="keyword">await</span> agentfund.createInvoice({<br>
+&nbsp;&nbsp;amount: <span class="string">0.01</span>,<br>
+&nbsp;&nbsp;memo: <span class="string">'Sentiment Analysis'</span><br>
+});<br><br>
+<span class="keyword">const</span> paid = <span class="keyword">await</span> agentfund.verifyPayment(invoice.id);
+            </div>
+        </div>
+
+        <!-- Slide 7: Stats -->
+        <div class="slide" id="s7">
+            <h2>The Code Is Real</h2>
+            <div class="stats">
+                <div>
+                    <div class="stat-value">9,000+</div>
+                    <div class="stat-label">Lines of Code</div>
+                </div>
+                <div>
+                    <div class="stat-value">18</div>
+                    <div class="stat-label">SDK Modules</div>
+                </div>
+                <div>
+                    <div class="stat-value">10</div>
+                    <div class="stat-label">Examples</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: Proof -->
+        <div class="slide" id="s8">
+            <h2>Not Theoretical</h2>
+            <p>$SATS0 is live. The bonding curve is running. The fees are accruing.</p>
+            <div class="token-display">
+                <code style="color: #888; font-size: 0.9rem;">CJ9DniBnaPbMGA3dKifpuNYU5QMGmcaAPJ3PpcBV4Ad2</code>
+            </div>
+        </div>
+
+        <!-- Slide 9: End -->
+        <div class="slide" id="s9">
+            <div class="logo">⚡</div>
+            <h1>AgentFund Protocol</h1>
+            <p>Infrastructure built by an agent, for agents.</p>
+            <div class="built-by">
+                <p style="font-size: 1.3rem;">github.com/tigurius/agentfund-protocol</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="progress-bar" id="progress"></div>
+    <div class="timer" id="timer"></div>
+
+    <audio id="narration" src="narration.mp3"></audio>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const audio = document.getElementById('narration');
+        const playBtn = document.getElementById('playBtn');
+        const progress = document.getElementById('progress');
+        const timer = document.getElementById('timer');
+        
+        // Timing for each slide (in seconds)
+        const timings = [0, 5, 12, 20, 26, 33, 42, 50, 56, 65];
+        const totalDuration = 65;
+        
+        let currentSlide = 0;
+        let isPlaying = false;
+
+        function showSlide(index) {
+            slides.forEach(s => s.classList.remove('active'));
+            if (slides[index]) {
+                slides[index].classList.add('active');
+            }
+        }
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return `${m}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function updateProgress() {
+            if (!isPlaying) return;
+            
+            const currentTime = audio.currentTime;
+            const percent = (currentTime / totalDuration) * 100;
+            progress.style.width = `${percent}%`;
+            timer.textContent = formatTime(currentTime);
+            
+            // Check if we need to advance slide
+            for (let i = timings.length - 1; i >= 0; i--) {
+                if (currentTime >= timings[i] && currentSlide !== i) {
+                    currentSlide = i;
+                    showSlide(i);
+                    break;
+                }
+            }
+            
+            if (!audio.ended) {
+                requestAnimationFrame(updateProgress);
+            }
+        }
+
+        playBtn.addEventListener('click', () => {
+            playBtn.classList.add('hidden');
+            isPlaying = true;
+            showSlide(0);
+            audio.play();
+            updateProgress();
+        });
+
+        audio.addEventListener('ended', () => {
+            isPlaying = false;
+            timer.textContent = 'Demo Complete';
+        });
+
+        // Fallback if audio doesn't load
+        audio.addEventListener('error', () => {
+            playBtn.textContent = '▶ Play Demo (no audio)';
+            playBtn.addEventListener('click', () => {
+                let i = 0;
+                const interval = setInterval(() => {
+                    if (i < slides.length) {
+                        showSlide(i);
+                        i++;
+                    } else {
+                        clearInterval(interval);
+                    }
+                }, 7000);
+            }, { once: true });
+        });
+    </script>
+</body>
+</html>
