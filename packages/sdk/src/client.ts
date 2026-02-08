@@ -59,6 +59,9 @@ export class AgentFundClient {
     const response = await fetch(`${this.baseUrl}/health`, {
       headers: this.headers,
     });
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status} ${response.statusText}`);
+    }
     return response.json();
   }
 
@@ -69,6 +72,9 @@ export class AgentFundClient {
     const response = await fetch(`${this.baseUrl}/services`, {
       headers: this.headers,
     });
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status} ${response.statusText}`);
+    }
     const data = await response.json();
     return data.services;
   }
@@ -80,6 +86,9 @@ export class AgentFundClient {
     const response = await fetch(`${this.baseUrl}/services/${serviceId}`, {
       headers: this.headers,
     });
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status} ${response.statusText}`);
+    }
     const data = await response.json();
     return data.service;
   }

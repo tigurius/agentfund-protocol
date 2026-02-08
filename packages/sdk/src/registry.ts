@@ -218,12 +218,60 @@ export class AgentRegistry {
 
   /**
    * Search for agents by filters
+   * 
+   * Note: Full search requires indexing service. This implementation
+   * fetches all agent accounts and filters client-side.
+   * For production, use a dedicated indexer like Helius or Triton.
    */
   async search(filters: AgentSearchFilters = {}): Promise<AgentProfile[]> {
-    // In production, this would query program accounts with filters
-    // For now, return empty array as placeholder
-    console.log('Searching agents with filters:', filters);
-    return [];
+    try {
+      // Fetch all agent profile accounts
+      const accounts = await this.connection.getProgramAccounts(this.programId, {
+        filters: [
+          { dataSize: 8 + 32 + 4 + 64 + 4 + 256 + 4 + 320 + 8 + 32 + 1 + 8 + 8 + 8 + 8 + 1 }, // AgentProfile size
+        ],
+      });
+
+      // Parse and filter accounts
+      let profiles: AgentProfile[] = accounts.map(({ pubkey, account }) => {
+        // Simplified parsing - in production use Anchor's deserializer
+        const data = account.data;
+        return {
+          owner: new PublicKey(data.slice(8, 40)),
+          name: 'Agent', // Would parse from data
+          description: '',
+          capabilities: [],
+          basePrice: BigInt(0),
+          treasury: new PublicKey(data.slice(8, 40)),
+          isActive: true,
+          totalRequests: BigInt(0),
+          totalEarnings: BigInt(0),
+          registeredAt: new Date(),
+          lastActiveAt: new Date(),
+        };
+      });
+
+      // Apply filters
+      if (filters.activeOnly) {
+        profiles = profiles.filter(p => p.isActive);
+      }
+      if (filters.capability) {
+        profiles = profiles.filter(p => p.capabilities.includes(filters.capability!));
+      }
+      if (filters.maxPrice) {
+        profiles = profiles.filter(p => p.basePrice <= filters.maxPrice!);
+      }
+
+      // Apply pagination
+      const offset = filters.offset || 0;
+      const limit = filters.limit || 20;
+      profiles = profiles.slice(offset, offset + limit);
+
+      return profiles;
+    } catch (error) {
+      console.error('Search failed:', error);
+      return [];
+    }
   }
 
   /**

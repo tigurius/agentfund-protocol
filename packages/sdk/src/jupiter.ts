@@ -7,6 +7,32 @@
 import { Connection, PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
 
 const JUPITER_API = 'https://quote-api.jup.ag/v6';
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 1000;
+
+/**
+ * Fetch with exponential backoff retry
+ */
+async function fetchWithRetry(
+  url: string,
+  options?: RequestInit,
+  retries = MAX_RETRIES
+): Promise<Response> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await fetch(url, options);
+      if (response.ok || response.status < 500) {
+        return response;
+      }
+      // Server error, retry
+    } catch (error) {
+      if (i === retries - 1) throw error;
+    }
+    // Exponential backoff
+    await new Promise(r => setTimeout(r, RETRY_DELAY_MS * Math.pow(2, i)));
+  }
+  throw new Error(`Failed after ${retries} retries`);
+}
 
 export interface SwapQuote {
   inputMint: string;
@@ -51,7 +77,7 @@ export class JupiterIntegration {
     url.searchParams.set('amount', amountLamports.toString());
     url.searchParams.set('slippageBps', slippage.toString());
 
-    const response = await fetch(url.toString());
+    const response = await fetchWithRetry(url.toString());
     
     if (!response.ok) {
       throw new Error(`Jupiter quote failed: ${response.statusText}`);
@@ -77,7 +103,7 @@ export class JupiterIntegration {
     userPublicKey: PublicKey;
     wrapUnwrapSOL?: boolean;
   }): Promise<VersionedTransaction> {
-    const response = await fetch(`${JUPITER_API}/swap`, {
+    const response = await fetchWithRetry(`${JUPITER_API}/swap`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
