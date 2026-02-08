@@ -189,7 +189,7 @@ agentfund-protocol/
 - ✅ Comprehensive test suite
 
 ### Deployment
-- ⏳ Devnet deployment
+- ✅ Devnet deployment — [View on Explorer](https://explorer.solana.com/address/5LqS68L9kfrB5h2D3NjJ9d8jEJz7egkyXUWEySGNZUeg?cluster=devnet)
 - ⏳ Mainnet deployment
 
 ## Demo
