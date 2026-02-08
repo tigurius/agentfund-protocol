@@ -8,6 +8,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import swaggerUi from 'swagger-ui-express';
 import { config } from 'dotenv';
 import { AgentFund } from '@agentfund/sdk';
 import { Keypair } from '@solana/web3.js';
@@ -15,6 +16,7 @@ import { invoiceRouter } from './routes/invoices';
 import { servicesRouter } from './routes/services';
 import { healthRouter } from './routes/health';
 import registryRouter from './routes/registry';
+import { swaggerDocument } from './swagger';
 import { errorHandler } from './middleware/error';
 import { requestLogger } from './middleware/logger';
 
@@ -58,6 +60,7 @@ app.use('/health', healthRouter);
 app.use('/invoices', invoiceRouter);
 app.use('/services', servicesRouter);
 app.use('/registry', registryRouter);
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -70,8 +73,9 @@ app.get('/', (req, res) => {
       invoices: '/invoices',
       services: '/services',
       registry: '/registry',
+      docs: '/docs',
     },
-    docs: 'https://github.com/tigurius/agentfund-protocol',
+    github: 'https://github.com/tigurius/agentfund-protocol',
   });
 });
 
