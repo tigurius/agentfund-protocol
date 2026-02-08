@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  # API Server
+  server:
+    build:
+      context: .
+      dockerfile: packages/server/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - SOLANA_RPC_URL=https://api.devnet.solana.com
+      - PORT=3000
+      - NODE_ENV=production
+    restart: unless-stopped
+
+  # Devnet deployment
+  deploy-devnet:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.deploy
+    command: devnet
+    volumes:
+      - ~/.config/solana:/root/.config/solana:rw
+    profiles:
+      - deploy
+
+  # Mainnet deployment (requires CONFIRM_MAINNET=yes)
+  deploy-mainnet:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.deploy
+    command: mainnet
+    environment:
+      - CONFIRM_MAINNET=${CONFIRM_MAINNET:-no}
+    volumes:
+      - ~/.config/solana:/root/.config/solana:rw
+    profiles:
+      - deploy
+
+# Usage:
+# Start server:          docker-compose up server
+# Deploy to devnet:      docker-compose --profile deploy up deploy-devnet
+# Deploy to mainnet:     CONFIRM_MAINNET=yes docker-compose --profile deploy up deploy-mainnet

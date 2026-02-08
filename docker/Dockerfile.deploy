@@ -1,0 +1,45 @@
+# AgentFund Protocol - Deployment Container
+# 
+# Includes Rust, Solana CLI, and Anchor for program deployment
+#
+# Build: docker build -f docker/Dockerfile.deploy -t agentfund-deploy .
+# Run:   docker run -v ~/.config/solana:/root/.config/solana agentfund-deploy devnet
+
+FROM rust:1.75-slim-bookworm
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    pkg-config \
+    libssl-dev \
+    libudev-dev \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Solana CLI
+RUN sh -c "$(curl -sSfL https://release.solana.com/v1.17.16/install)" && \
+    echo 'export PATH="/root/.local/share/solana/install/active_release/bin:$PATH"' >> ~/.bashrc
+ENV PATH="/root/.local/share/solana/install/active_release/bin:${PATH}"
+
+# Install Anchor
+RUN cargo install --git https://github.com/coral-xyz/anchor avm --locked && \
+    avm install 0.29.0 && \
+    avm use 0.29.0
+
+# Set workdir
+WORKDIR /agentfund
+
+# Copy contracts
+COPY packages/contracts ./packages/contracts
+
+# Build program
+WORKDIR /agentfund/packages/contracts
+RUN anchor build
+
+# Entrypoint script
+COPY docker/deploy-entrypoint.sh /deploy-entrypoint.sh
+RUN chmod +x /deploy-entrypoint.sh
+
+ENTRYPOINT ["/deploy-entrypoint.sh"]
+CMD ["devnet"]
