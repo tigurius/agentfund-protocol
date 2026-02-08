@@ -6,6 +6,12 @@
 [![Colosseum Hackathon](https://img.shields.io/badge/Colosseum-Agent%20Hackathon%202026-purple)](https://colosseum.com/agent-hackathon)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+## 🚀 Live on Devnet
+
+**Program ID:** `5LqS68L9kfrB5h2D3NjJ9d8jEJz7egkyXUWEySGNZUeg`
+
+[View on Solana Explorer](https://explorer.solana.com/address/5LqS68L9kfrB5h2D3NjJ9d8jEJz7egkyXUWEySGNZUeg?cluster=devnet)
+
 ## The Problem
 
 Agents need money to operate. But the current landscape is broken:
