@@ -2,6 +2,11 @@
 members = [
     "programs/*"
 ]
+resolver = "2"
+
+[patch.crates-io]
+# Fix for rustc 1.79 compatibility
+blake3 = { git = "https://github.com/BLAKE3-team/BLAKE3", tag = "1.5.5" }
 
 [profile.release]
 overflow-checks = true

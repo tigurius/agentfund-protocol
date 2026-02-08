@@ -9,9 +9,10 @@
 //! - Treasury management for agents
 
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Token, TokenAccount, Transfer};
+// anchor-spl removed for rustc 1.79 compatibility
+// Token functionality can be added when platform-tools updates
 
-declare_id!("AgntFund1111111111111111111111111111111111");
+declare_id!("CU6rvyrE2d1NCAFaixBhYLLnEuyC86yHCNPCzLXwA65U");
 
 /// Maximum invoices per batch settlement
 pub const MAX_BATCH_SIZE: usize = 50;
