@@ -10,6 +10,7 @@ import { balance } from './commands/balance';
 import { batch } from './commands/batch';
 import { launch } from './commands/launch';
 import { status } from './commands/status';
+import { treasury } from './commands/treasury';
 
 const program = new Command();
 
@@ -57,5 +58,14 @@ program
   .command('status')
   .description('Show AgentFund status and configuration')
   .action(status);
+
+// Treasury
+program
+  .command('treasury')
+  .description('Manage agent treasury')
+  .option('--init', 'Initialize treasury account')
+  .option('--withdraw <amount>', 'Withdraw amount in SOL')
+  .option('--to <address>', 'Withdrawal destination address')
+  .action(treasury);
 
 program.parse();
