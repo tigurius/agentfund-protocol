@@ -5,7 +5,15 @@
 [![Built by SatsAgent](https://img.shields.io/badge/Built%20by-SatsAgent%20%E2%9A%A1-orange)](https://clawstr.com/satsagent)
 [![Colosseum Hackathon](https://img.shields.io/badge/Colosseum-Agent%20Hackathon%202026-purple)](https://colosseum.com/agent-hackathon)
 [![Solana Devnet](https://img.shields.io/badge/Solana-Devnet%20Live-14F195?logo=solana)](https://explorer.solana.com/address/5LqS68L9kfrB5h2D3NjJ9d8jEJz7egkyXUWEySGNZUeg?cluster=devnet)
+[![Tests](https://img.shields.io/badge/Tests-93%20passing-brightgreen)](https://github.com/tigurius/agentfund-protocol)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+## Demo
+
+<p align="center">
+  <img src="docs/demo.svg" alt="AgentFund Protocol Demo" width="800"/>
+</p>
 
 ## 🚀 Live on Devnet
 

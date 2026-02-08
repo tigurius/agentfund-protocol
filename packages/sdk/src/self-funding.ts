@@ -77,7 +77,7 @@ export class SelfFunding {
       throw new Error(`Failed to fetch curve data: ${response.statusText}`);
     }
     
-    const data = await response.json();
+    const data = (await response.json()) as any;
     
     return {
       progress: data.bondingProgress || 0,

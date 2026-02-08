@@ -148,12 +148,16 @@ describe('Micropayments', () => {
       await agentfund.micropayments.recordPayment(invoice1.id, 0.001);
       await agentfund.micropayments.recordPayment(invoice2.id, 0.002);
 
+      // checkPayment updates status to RECEIVED
+      await agentfund.verifyPayment(invoice1.id);
+      await agentfund.verifyPayment(invoice2.id);
+
       const batch = await agentfund.settleBatch();
 
       expect(batch.id).toMatch(/^batch_/);
       expect(batch.invoices).toHaveLength(2);
       expect(batch.totalAmount).toBe(0.003);
-      expect(batch.status).toBe('pending');
+      expect(batch.status).toBe('settled');
     });
   });
 });

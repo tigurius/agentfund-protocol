@@ -49,6 +49,11 @@ export interface ServiceInvokeResult<T = any> {
   };
 }
 
+/** Type-safe JSON parser */
+async function json<T>(response: Response): Promise<T> {
+  return (await response.json()) as T;
+}
+
 export class AgentFundClient {
   private baseUrl: string;
   private headers: Record<string, string>;
@@ -77,7 +82,7 @@ export class AgentFundClient {
     if (!response.ok) {
       throw new Error(`API error: ${response.status} ${response.statusText}`);
     }
-    return response.json();
+    return json(response);
   }
 
   /**
@@ -90,7 +95,7 @@ export class AgentFundClient {
     if (!response.ok) {
       throw new Error(`API error: ${response.status} ${response.statusText}`);
     }
-    const data = await response.json();
+    const data = await json<{ services: ServiceInfo[] }>(response);
     return data.services;
   }
 
@@ -104,7 +109,7 @@ export class AgentFundClient {
     if (!response.ok) {
       throw new Error(`API error: ${response.status} ${response.statusText}`);
     }
-    const data = await response.json();
+    const data = await json<{ service: ServiceInfo }>(response);
     return data.service;
   }
 
@@ -123,7 +128,7 @@ export class AgentFundClient {
       body: JSON.stringify({ input, invoiceId }),
     });
 
-    return response.json();
+    return json<ServiceInvokeResult<T>>(response);
   }
 
   /**
@@ -139,7 +144,7 @@ export class AgentFundClient {
       headers: this.headers,
       body: JSON.stringify(params),
     });
-    const data = await response.json();
+    const data = await json<{ invoice: InvoiceResponse }>(response);
     return data.invoice;
   }
 
@@ -150,7 +155,7 @@ export class AgentFundClient {
     const response = await fetch(`${this.baseUrl}/invoices/${invoiceId}`, {
       headers: this.headers,
     });
-    const data = await response.json();
+    const data = await json<{ invoice: InvoiceResponse }>(response);
     return data.invoice;
   }
 
@@ -162,7 +167,7 @@ export class AgentFundClient {
       method: 'POST',
       headers: this.headers,
     });
-    return response.json();
+    return json(response);
   }
 
   /**
@@ -176,7 +181,7 @@ export class AgentFundClient {
         headers: this.headers,
       }
     );
-    return response.json();
+    return json(response);
   }
 
   /**
@@ -191,7 +196,6 @@ export class AgentFundClient {
     input: any,
     paymentCallback?: (invoice: { id: string; amount: number; payTo: string }) => Promise<void>
   ): Promise<T> {
-    // First invocation to get invoice
     const firstResult = await this.invokeService<T>(serviceId, input);
 
     if (firstResult.status === 'success') {
@@ -202,15 +206,12 @@ export class AgentFundClient {
       throw new Error('Unexpected response status');
     }
 
-    // Handle payment
     if (paymentCallback) {
       await paymentCallback(firstResult.invoice);
     } else {
-      // Use simulated payment for testing
       await this.simulatePayment(firstResult.invoice.id);
     }
 
-    // Retry with invoice ID
     const secondResult = await this.invokeService<T>(
       serviceId,
       input,

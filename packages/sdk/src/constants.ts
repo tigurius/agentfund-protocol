@@ -24,6 +24,10 @@ export const MAX_MEMO_LENGTH = 256;
 export const DEFAULT_INVOICE_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
 export const DEFAULT_BATCH_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
+// Aliases for backward compatibility
+export const PROGRAM_ID = AGENTFUND_PROGRAM_ID;
+export const DEVNET_RPC = 'https://api.devnet.solana.com';
+
 // Networks
 export const NETWORKS = {
   'mainnet-beta': 'https://api.mainnet-beta.solana.com',

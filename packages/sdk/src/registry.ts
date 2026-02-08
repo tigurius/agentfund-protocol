@@ -157,7 +157,7 @@ export class AgentRegistry {
   }> {
     const [profilePDA, bump] = this.getAgentProfilePDA(owner.publicKey);
     const [treasuryPDA] = PublicKey.findProgramAddressSync(
-      [Buffer.from('treasury'), owner.toBuffer()],
+      [Buffer.from('treasury'), owner.publicKey.toBuffer()],
       this.programId
     );
 

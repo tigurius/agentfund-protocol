@@ -89,7 +89,7 @@ export class JupiterIntegration {
       throw new Error(`Jupiter quote failed: ${response.statusText}`);
     }
 
-    const quote = await response.json();
+    const quote = (await response.json()) as any;
 
     return {
       inputMint: quote.inputMint,
@@ -123,7 +123,7 @@ export class JupiterIntegration {
       throw new Error(`Jupiter swap failed: ${response.statusText}`);
     }
 
-    const { swapTransaction } = await response.json();
+    const { swapTransaction } = (await response.json()) as any;
     const txBuffer = Buffer.from(swapTransaction, 'base64');
     return VersionedTransaction.deserialize(txBuffer);
   }

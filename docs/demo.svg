@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="800" height="500">
+  <style>
+    @keyframes typing { from { width: 0 } to { width: 100% } }
+    @keyframes blink { 0%, 100% { opacity: 1 } 50% { opacity: 0 } }
+    @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+    
+    .terminal { fill: #1a1b26; }
+    .bar { fill: #2d2f3f; }
+    .dot1 { fill: #ff5f57; }
+    .dot2 { fill: #febc2e; }
+    .dot3 { fill: #28c840; }
+    .title { fill: #a9b1d6; font-family: monospace; font-size: 13px; }
+    .prompt { fill: #7aa2f7; font-family: monospace; font-size: 14px; }
+    .cmd { fill: #c0caf5; font-family: monospace; font-size: 14px; }
+    .output { fill: #9ece6a; font-family: monospace; font-size: 13px; }
+    .dim { fill: #565f89; font-family: monospace; font-size: 13px; }
+    .accent { fill: #bb9af7; font-family: monospace; font-size: 13px; }
+    .warn { fill: #e0af68; font-family: monospace; font-size: 13px; }
+    .cursor { fill: #c0caf5; animation: blink 1s infinite; }
+
+    .line1 { animation: fadeIn 0.3s ease 0.5s both; }
+    .line2 { animation: fadeIn 0.3s ease 1.2s both; }
+    .line3 { animation: fadeIn 0.3s ease 1.5s both; }
+    .line4 { animation: fadeIn 0.3s ease 1.8s both; }
+    .line5 { animation: fadeIn 0.3s ease 2.5s both; }
+    .line6 { animation: fadeIn 0.3s ease 3.0s both; }
+    .line7 { animation: fadeIn 0.3s ease 3.3s both; }
+    .line8 { animation: fadeIn 0.3s ease 3.6s both; }
+    .line9 { animation: fadeIn 0.3s ease 3.9s both; }
+    .line10 { animation: fadeIn 0.3s ease 4.5s both; }
+    .line11 { animation: fadeIn 0.3s ease 5.0s both; }
+    .line12 { animation: fadeIn 0.3s ease 5.3s both; }
+    .line13 { animation: fadeIn 0.3s ease 5.6s both; }
+    .line14 { animation: fadeIn 0.3s ease 6.2s both; }
+    .line15 { animation: fadeIn 0.3s ease 6.5s both; }
+    .line16 { animation: fadeIn 0.3s ease 6.8s both; }
+    .line17 { animation: fadeIn 0.3s ease 7.5s both; }
+    .line18 { animation: fadeIn 0.3s ease 8.0s both; }
+  </style>
+
+  <!-- Terminal window -->
+  <rect class="terminal" x="0" y="0" width="800" height="500" rx="10"/>
+  <rect class="bar" x="0" y="0" width="800" height="36" rx="10"/>
+  <rect class="terminal" x="0" y="26" width="800" height="10"/>
+  <circle class="dot1" cx="20" cy="18" r="6"/>
+  <circle class="dot2" cx="40" cy="18" r="6"/>
+  <circle class="dot3" cx="60" cy="18" r="6"/>
+  <text class="title" x="400" y="22" text-anchor="middle">AgentFund Protocol — Demo</text>
+
+  <!-- Line 1: Create invoice -->
+  <g class="line1">
+    <text class="prompt" x="20" y="65">$</text>
+    <text class="cmd" x="35" y="65">agentfund.createInvoice({ amount: 0.01, memo: 'Sentiment API' })</text>
+  </g>
+
+  <!-- Line 2-4: Invoice output -->
+  <g class="line2">
+    <text class="output" x="20" y="90">✓ Invoice created</text>
+  </g>
+  <g class="line3">
+    <text class="dim" x="40" y="110">id: inv_1707408123_x7k2m</text>
+  </g>
+  <g class="line4">
+    <text class="dim" x="40" y="130">amount: 0.01 SOL  |  expires: 1h  |  status: pending</text>
+  </g>
+
+  <!-- Line 5: Verify payment -->
+  <g class="line5">
+    <text class="prompt" x="20" y="165">$</text>
+    <text class="cmd" x="35" y="165">agentfund.verifyPayment('inv_1707408123_x7k2m')</text>
+  </g>
+
+  <!-- Line 6-7: Payment received -->
+  <g class="line6">
+    <text class="output" x="20" y="190">✓ Payment received!</text>
+  </g>
+  <g class="line7">
+    <text class="dim" x="40" y="210">0.01 SOL from 8RTK...1tci  |  tx: 5Yxo...HhFs</text>
+  </g>
+
+  <!-- Line 8: Register agent -->
+  <g class="line8">
+    <text class="prompt" x="20" y="245">$</text>
+    <text class="cmd" x="35" y="245">registry.register({ name: 'SatsAgent', capabilities: ['sentiment'] })</text>
+  </g>
+
+  <!-- Line 9: Agent registered -->
+  <g class="line9">
+    <text class="output" x="20" y="270">✓ Agent registered on-chain</text>
+  </g>
+  <g class="line10">
+    <text class="dim" x="40" y="290">profile: 7qAb...3kFw  |  capabilities: [sentiment]</text>
+  </g>
+
+  <!-- Line 11: Settle batch -->
+  <g class="line11">
+    <text class="prompt" x="20" y="325">$</text>
+    <text class="cmd" x="35" y="325">agentfund.settleBatch()</text>
+  </g>
+
+  <!-- Line 12-14: Settlement -->
+  <g class="line12">
+    <text class="output" x="20" y="350">✓ Batch settled</text>
+  </g>
+  <g class="line13">
+    <text class="dim" x="40" y="370">12 invoices → 1 transaction  |  total: 0.142 SOL</text>
+  </g>
+  <g class="line14">
+    <text class="accent" x="40" y="390">gas saved: 95.8% vs individual transactions</text>
+  </g>
+
+  <!-- Line 15: Stream -->
+  <g class="line15">
+    <text class="prompt" x="20" y="425">$</text>
+    <text class="cmd" x="35" y="425">streaming.createStream({ rate: '0.001 SOL/min', duration: '1h' })</text>
+  </g>
+  <g class="line16">
+    <text class="output" x="20" y="450">✓ Stream active</text>
+  </g>
+  <g class="line17">
+    <text class="dim" x="40" y="470">rate: 16,666 lamports/s  |  total: 0.06 SOL  |  live ●</text>
+  </g>
+
+  <!-- Cursor -->
+  <g class="line18">
+    <text class="prompt" x="20" y="495">$</text>
+    <rect class="cursor" x="35" y="483" width="8" height="15"/>
+  </g>
+</svg>
