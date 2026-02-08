@@ -38,12 +38,17 @@ function printStep(num: number, text: string) {
   console.log(colors.dim + '─'.repeat(50) + colors.reset);
 }
 
-async function typeText(text: string, delay: number = 30) {
+async function typeText(text: string, delay: number = 50) {
   for (const char of text) {
     process.stdout.write(char);
     await sleep(delay);
   }
   console.log();
+}
+
+// Longer pause between sections for voice sync
+async function sectionPause(seconds: number = 2) {
+  await sleep(seconds * 1000);
 }
 
 async function waitForEnter() {
@@ -88,7 +93,7 @@ async function main() {
   const agentWallet = Keypair.generate();
   print(`  Agent wallet: ${agentWallet.publicKey.toBase58().slice(0, 24)}...`, colors.dim);
   
-  await sleep(500);
+  await sectionPause(2);
   await typeText('  Creating invoice for AI service...');
   
   const invoice = {
@@ -100,8 +105,9 @@ async function main() {
     status: 'pending',
   };
   
-  await sleep(300);
+  await sectionPause(1.5);
   print('\n  ✅ Invoice created:', colors.green);
+  await sleep(500);
   console.log(colors.cyan + JSON.stringify(invoice, null, 4) + colors.reset);
   
   await waitForEnter();
@@ -112,7 +118,7 @@ async function main() {
   print(`  Client wallet: ${clientWallet.publicKey.toBase58().slice(0, 24)}...`, colors.dim);
   
   await typeText('  Sending 50,000 lamports...');
-  await sleep(500);
+  await sectionPause(2);
   
   invoice.status = 'paid';
   print('  ✅ Payment confirmed!', colors.green);
@@ -136,8 +142,9 @@ async function main() {
   ];
   
   print('  Incoming micropayments:', colors.yellow);
+  await sleep(800);
   for (const mp of micropayments) {
-    await sleep(200);
+    await sleep(600);
     print(`    + ${mp.amount.toLocaleString()} lamports - ${mp.service}`, colors.dim);
   }
   
@@ -149,7 +156,7 @@ async function main() {
   printStep(4, 'Settle batch in single transaction');
   
   await typeText('  Batching 5 invoices into one transaction...');
-  await sleep(500);
+  await sectionPause(2);
   
   print('  ✅ Batch settled!', colors.green);
   print(`  Amount: ${total.toLocaleString()} lamports`, colors.dim);
@@ -172,7 +179,7 @@ async function main() {
   };
   
   await typeText('  Registering on-chain profile...');
-  await sleep(300);
+  await sectionPause(2);
   
   print('\n  ✅ Agent registered:', colors.green);
   console.log(colors.cyan + JSON.stringify(agentProfile, null, 4) + colors.reset);
@@ -182,9 +189,10 @@ async function main() {
   printStep(6, 'Discover agents by capability');
   
   await typeText('  Searching for: sentiment analysis providers...');
-  await sleep(500);
+  await sectionPause(2);
   
   print('\n  Found 3 providers:', colors.yellow);
+  await sleep(500);
   print('    1. SentimentBot    - 10,000 lamports - ⭐⭐⭐⭐⭐', colors.dim);
   print('    2. CryptoFeels     - 15,000 lamports - ⭐⭐⭐⭐', colors.dim);
   print('    3. MarketMood      -  8,000 lamports - ⭐⭐⭐', colors.dim);
@@ -194,14 +202,15 @@ async function main() {
   printStep(7, 'Request service with escrowed payment');
   
   await typeText('  Creating service request...');
+  await sectionPause(1);
   await typeText('  Escrowing 10,000 lamports...');
-  await sleep(300);
+  await sectionPause(1.5);
   
   print('  ✅ Request created, payment escrowed', colors.green);
   
-  await sleep(500);
+  await sectionPause(1.5);
   await typeText('  Provider processing request...');
-  await sleep(500);
+  await sectionPause(2);
   
   print('  ✅ Service completed!', colors.green);
   print('  ✅ Escrow released to provider', colors.green);
@@ -219,14 +228,16 @@ async function main() {
   print('  Rate: ~277,777 lamports/second', colors.dim);
   
   await typeText('  Initializing stream...');
-  await sleep(300);
+  await sectionPause(2);
   
   print('  ✅ Stream active!', colors.green);
+  await sectionPause(1);
   
   // Simulate streaming
   print('\n  Simulating 10 seconds of streaming:', colors.yellow);
+  await sleep(800);
   for (let i = 1; i <= 5; i++) {
-    await sleep(400);
+    await sleep(800);
     const streamed = i * 277777 * 2;
     print(`    ${i * 2}s: ${streamed.toLocaleString()} lamports streamed`, colors.dim);
   }
