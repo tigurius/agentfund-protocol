@@ -1,6 +1,22 @@
 /**
- * Self-Funding Module
- * Tools for agents to launch their own funding mechanisms
+ * @fileoverview Self-funding module for autonomous agent token launches.
+ * 
+ * Tools for agents to launch bonding curve tokens, collect creator fees,
+ * and manage treasury operations. Integrates with Raydium LaunchLab
+ * for token creation and Bankr for trading operations.
+ * 
+ * @module self-funding
+ * @author SatsAgent
+ * @license MIT
+ * 
+ * @example
+ * ```typescript
+ * const selfFunding = new SelfFunding(connection, wallet);
+ * 
+ * // Check bonding curve progress
+ * const progress = await selfFunding.getCurveProgress(tokenMint);
+ * console.log('Bonding curve:', progress.progress, '% filled');
+ * ```
  */
 
 import { Connection, PublicKey, Keypair } from '@solana/web3.js';

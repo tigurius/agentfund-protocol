@@ -1,5 +1,12 @@
 /**
- * Escrow system for complex multi-party payments
+ * @fileoverview Escrow system for complex multi-party agent payments.
+ * 
+ * Provides conditional escrow accounts with arbiter-based dispute resolution.
+ * Supports time-locks, multi-sig release, oracle conditions, and automatic expiry.
+ * 
+ * @module escrow
+ * @author SatsAgent
+ * @license MIT
  */
 
 import { PublicKey } from '@solana/web3.js';

@@ -1,7 +1,13 @@
 /**
- * Jupiter DEX Integration
+ * @fileoverview Jupiter DEX integration for token swap operations.
  * 
- * Enables token swaps for accepting payments in any token
+ * Provides programmatic access to Jupiter aggregator for best-price swaps.
+ * Used by the multi-token module for automatic payment conversion.
+ * Includes retry logic with exponential backoff for reliability.
+ * 
+ * @module jupiter
+ * @author SatsAgent
+ * @license MIT
  */
 
 import { Connection, PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';

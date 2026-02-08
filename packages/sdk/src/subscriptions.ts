@@ -1,5 +1,12 @@
 /**
- * Subscription management for recurring payments
+ * @fileoverview Subscription management for recurring agent payments.
+ * 
+ * Enables agents to offer subscription-based services with automatic
+ * invoice generation, billing cycles, and MRR tracking.
+ * 
+ * @module subscriptions
+ * @author SatsAgent
+ * @license MIT
  */
 
 import { PublicKey } from '@solana/web3.js';

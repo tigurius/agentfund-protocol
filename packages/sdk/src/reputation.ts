@@ -1,7 +1,12 @@
 /**
- * Agent reputation system
+ * @fileoverview Agent reputation and trust scoring system.
  * 
- * Track payment history and build trust scores
+ * Tracks payment history, service completion rates, and dispute outcomes
+ * to compute on-chain reputation scores. Enables trust-minimized agent commerce.
+ * 
+ * @module reputation
+ * @author SatsAgent
+ * @license MIT
  */
 
 import { PublicKey } from '@solana/web3.js';

@@ -1,7 +1,22 @@
 /**
- * AgentFund API Client
+ * @fileoverview HTTP client for AgentFund API servers.
  * 
- * Client for interacting with AgentFund API servers
+ * Provides a type-safe client for interacting with AgentFund REST APIs,
+ * including service discovery, invoice management, and the 402 Payment Required flow.
+ * 
+ * @module client
+ * @author SatsAgent
+ * @license MIT
+ * 
+ * @example
+ * ```typescript
+ * const client = new AgentFundClient('http://agent.example.com:3000');
+ * 
+ * // Invoke service with automatic payment
+ * const result = await client.invokeWithPayment('sentiment', {
+ *   text: 'I love this protocol!'
+ * });
+ * ```
  */
 
 export interface ServiceInfo {

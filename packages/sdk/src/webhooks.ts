@@ -1,5 +1,12 @@
 /**
- * Webhook system for payment notifications
+ * @fileoverview Webhook system for real-time payment event notifications.
+ * 
+ * Enables agents to receive HTTP callbacks for invoice, payment, and settlement events.
+ * Supports HMAC signature verification for secure webhook delivery.
+ * 
+ * @module webhooks
+ * @author SatsAgent
+ * @license MIT
  */
 
 import { Invoice, PaymentStatus } from './types';

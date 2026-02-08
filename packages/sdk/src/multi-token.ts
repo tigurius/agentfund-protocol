@@ -1,7 +1,12 @@
 /**
- * Multi-token payment support
+ * @fileoverview Multi-token payment support with automatic conversion.
  * 
- * Accept payments in any SPL token and auto-convert to SOL
+ * Accept payments in any SPL token and auto-convert to SOL via Jupiter DEX.
+ * Supports configurable slippage, preferred tokens, and min amounts.
+ * 
+ * @module multi-token
+ * @author SatsAgent
+ * @license MIT
  */
 
 import { Connection, PublicKey, Keypair, Transaction } from '@solana/web3.js';
