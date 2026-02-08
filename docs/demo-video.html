@@ -313,14 +313,15 @@
         const progress = document.getElementById('progress');
         const timer = document.getElementById('timer');
         
-        // Timing for each slide (in seconds)
-        const timings = [0, 5, 12, 20, 26, 33, 42, 50, 56, 65];
+        // Timing for each slide (in seconds) - 9 slides
+        const timings = [0, 5, 12, 20, 26, 33, 42, 50, 56];
         const totalDuration = 65;
         
-        let currentSlide = 0;
+        let currentSlideIndex = -1;
         let isPlaying = false;
 
         function showSlide(index) {
+            console.log('Showing slide:', index);
             slides.forEach(s => s.classList.remove('active'));
             if (slides[index]) {
                 slides[index].classList.add('active');
@@ -338,16 +339,21 @@
             
             const currentTime = audio.currentTime;
             const percent = (currentTime / totalDuration) * 100;
-            progress.style.width = `${percent}%`;
+            progress.style.width = `${Math.min(percent, 100)}%`;
             timer.textContent = formatTime(currentTime);
             
-            // Check if we need to advance slide
-            for (let i = timings.length - 1; i >= 0; i--) {
-                if (currentTime >= timings[i] && currentSlide !== i) {
-                    currentSlide = i;
-                    showSlide(i);
-                    break;
+            // Find which slide should be showing
+            let targetSlide = 0;
+            for (let i = 0; i < timings.length; i++) {
+                if (currentTime >= timings[i]) {
+                    targetSlide = i;
                 }
+            }
+            
+            // Only update if slide changed
+            if (targetSlide !== currentSlideIndex) {
+                currentSlideIndex = targetSlide;
+                showSlide(targetSlide);
             }
             
             if (!audio.ended) {
@@ -358,8 +364,13 @@
         playBtn.addEventListener('click', () => {
             playBtn.classList.add('hidden');
             isPlaying = true;
+            currentSlideIndex = 0;
             showSlide(0);
-            audio.play();
+            audio.play().catch(e => {
+                console.error('Audio play failed:', e);
+                // Fallback: auto-advance slides without audio
+                startSilentDemo();
+            });
             updateProgress();
         });
 
@@ -368,20 +379,24 @@
             timer.textContent = 'Demo Complete';
         });
 
+        function startSilentDemo() {
+            let i = 0;
+            showSlide(0);
+            const interval = setInterval(() => {
+                i++;
+                if (i < slides.length) {
+                    showSlide(i);
+                } else {
+                    clearInterval(interval);
+                    timer.textContent = 'Demo Complete';
+                }
+            }, 7000);
+        }
+
         // Fallback if audio doesn't load
         audio.addEventListener('error', () => {
+            console.error('Audio failed to load');
             playBtn.textContent = '▶ Play Demo (no audio)';
-            playBtn.addEventListener('click', () => {
-                let i = 0;
-                const interval = setInterval(() => {
-                    if (i < slides.length) {
-                        showSlide(i);
-                        i++;
-                    } else {
-                        clearInterval(interval);
-                    }
-                }, 7000);
-            }, { once: true });
         });
     </script>
 </body>
