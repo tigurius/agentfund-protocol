@@ -84,13 +84,50 @@ export class AgentFund {
     const pubkey = this.getPublicKey();
     const solBalance = await this.connection.getBalance(pubkey);
     
-    // TODO: Fetch token balances
+    // Fetch SPL token balances
     const tokens = new Map<string, number>();
+    
+    try {
+      const tokenAccounts = await this.connection.getParsedTokenAccountsByOwner(
+        pubkey,
+        { programId: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA') }
+      );
+      
+      for (const { account } of tokenAccounts.value) {
+        const parsed = account.data.parsed;
+        if (parsed?.info?.mint && parsed?.info?.tokenAmount?.uiAmount) {
+          tokens.set(parsed.info.mint, parsed.info.tokenAmount.uiAmount);
+        }
+      }
+    } catch {
+      // Token fetch failed, return empty map
+    }
 
     return {
       sol: solBalance / 1e9,
       tokens
     };
+  }
+
+  /**
+   * List all invoices (pending, paid, expired)
+   */
+  async listInvoices(): Promise<Invoice[]> {
+    return this.micropayments.listInvoices();
+  }
+
+  /**
+   * Get pending payments ready for settlement
+   */
+  async getPendingPayments(): Promise<Invoice[]> {
+    return this.micropayments.getPendingPayments();
+  }
+
+  /**
+   * Get settlement history
+   */
+  async getSettlementHistory(): Promise<BatchSettlement[]> {
+    return this.micropayments.getSettlementHistory();
   }
 
   // Helper methods

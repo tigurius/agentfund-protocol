@@ -23,6 +23,8 @@ export interface Invoice {
   status: PaymentStatus;
   /** Creation timestamp */
   createdAt: Date;
+  /** Payment received timestamp */
+  paidAt?: Date;
 }
 
 /**
@@ -53,7 +55,7 @@ export interface BatchSettlement {
   /** Settlement transaction signature */
   txSignature?: string;
   /** Settlement status */
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  status: 'pending' | 'processing' | 'settled' | 'failed';
   /** Scheduled settlement time */
   scheduledAt: Date;
   /** Actual settlement time */

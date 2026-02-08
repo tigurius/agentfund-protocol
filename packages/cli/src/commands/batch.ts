@@ -30,15 +30,52 @@ export async function batch(action: string) {
 
     case 'pending': {
       printInfo('Fetching pending micropayments...');
-      // TODO: Show pending invoices waiting for batch
-      console.log('(Pending batch view not yet implemented)');
+      
+      try {
+        const pending = await agentfund.getPendingPayments();
+        
+        if (pending.length === 0) {
+          console.log('No pending payments to settle.');
+        } else {
+          console.log(`\n  Found ${pending.length} pending payment(s):\n`);
+          let total = 0;
+          for (const inv of pending) {
+            console.log(`  • ${inv.id}: ${formatSOL(inv.amount)} - ${inv.memo || '(no memo)'}`);
+            total += inv.amount;
+          }
+          console.log(`\n  Total: ${formatSOL(total)}`);
+          console.log('  Run "agentfund batch settle" to settle all.\n');
+        }
+      } catch (err: any) {
+        printError(err.message);
+      }
       break;
     }
 
     case 'history': {
       printInfo('Fetching settlement history...');
-      // TODO: Show past settlements
-      console.log('(Settlement history not yet implemented)');
+      
+      try {
+        const history = await agentfund.getSettlementHistory();
+        
+        if (history.length === 0) {
+          console.log('No settlement history yet.');
+        } else {
+          console.log(`\n  Last ${history.length} settlement(s):\n`);
+          for (const s of history) {
+            console.log(`  • ${s.id}`);
+            console.log(`    Amount: ${formatSOL(s.totalAmount)} (${s.invoices.length} invoices)`);
+            console.log(`    Status: ${s.status}`);
+            console.log(`    Date:   ${s.settledAt?.toISOString() || s.scheduledAt.toISOString()}`);
+            if (s.txSignature) {
+              console.log(`    TX:     ${s.txSignature}`);
+            }
+            console.log('');
+          }
+        }
+      } catch (err: any) {
+        printError(err.message);
+      }
       break;
     }
 

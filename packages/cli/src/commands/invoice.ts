@@ -58,8 +58,26 @@ export async function invoice(action: string, options: InvoiceOptions) {
 
     case 'list': {
       printInfo('Listing invoices...');
-      // TODO: Implement invoice listing from storage
-      console.log('(Invoice persistence not yet implemented)');
+      
+      try {
+        const invoices = await agentfund.listInvoices();
+        
+        if (invoices.length === 0) {
+          console.log('No invoices found.');
+        } else {
+          console.log(`\n  ${invoices.length} invoice(s):\n`);
+          for (const inv of invoices) {
+            const statusIcon = inv.status === 'paid' ? '✓' : inv.status === 'expired' ? '✗' : '○';
+            console.log(`  ${statusIcon} ${inv.id}`);
+            console.log(`    Amount: ${formatSOL(inv.amount)}`);
+            console.log(`    Status: ${inv.status}`);
+            console.log(`    Memo:   ${inv.memo || '(none)'}`);
+            console.log('');
+          }
+        }
+      } catch (err: any) {
+        printError(err.message);
+      }
       break;
     }
 
