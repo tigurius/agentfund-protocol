@@ -47,6 +47,18 @@ export {
   createRegistry 
 } from './registry';
 
+// Streaming Payments
+export {
+  StreamingPayments,
+  PaymentStream,
+  StreamConfig,
+  StreamStatus,
+  StreamEvent,
+  StreamEventType,
+  STREAM_DURATIONS,
+  createStreamingPayments
+} from './streaming';
+
 // Utilities
 export * from './constants';
 export * from './pda';
