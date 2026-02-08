@@ -122,31 +122,62 @@ Standard interfaces for agent-to-agent payments.
 └──────────────────────────────────────────────────────────────┘
 ```
 
-### Service Discovery (Future)
+### Agent Registry (Implemented)
 
 ```typescript
-// Register a service
-await agentfund.commerce.registerService({
-  id: 'sentiment-v1',
-  name: 'Sentiment Analysis',
-  endpoint: 'https://my-agent.api/sentiment',
-  pricePerCall: 0.0001, // SOL
-  schema: { /* input/output schema */ }
+import { AgentRegistry, STANDARD_CAPABILITIES } from '@agentfund/sdk';
+
+const registry = new AgentRegistry(connection);
+
+// Register as a service provider
+await registry.register(ownerKeypair, {
+  name: 'SentimentBot',
+  description: 'AI-powered sentiment analysis',
+  capabilities: [STANDARD_CAPABILITIES.SENTIMENT, STANDARD_CAPABILITIES.SUMMARIZATION],
+  basePrice: BigInt(10000), // 10,000 lamports
 });
 
-// Discover services
-const services = await agentfund.commerce.findServices({
-  category: 'nlp',
-  maxPrice: 0.001
-});
+// Discover agents by capability
+const providers = await registry.findByCapability('sentiment');
 
-// Call with payment
-const result = await agentfund.commerce.callService(
-  'sentiment-v1',
-  { text: 'Hello world' }
+// Request a service (funds escrowed)
+const { requestId } = await registry.requestService(
+  requesterKeypair,
+  providerPubkey,
+  'sentiment',
+  BigInt(10000)
 );
-// Payment handled automatically
+
+// Provider completes and gets paid
+await registry.completeService(providerKeypair, requestId, resultHash);
 ```
+
+### Dispute Resolution (Implemented)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Dispute Flow                              │
+│                                                              │
+│   REQUEST ──> PENDING ──> COMPLETED                         │
+│                  │                                           │
+│                  └──> DISPUTED ──> RESOLVED                 │
+│                           │            │                     │
+│                           │      ┌─────┴─────┐              │
+│                           │      │           │              │
+│                           │   REFUND    PAY_PROVIDER        │
+│                           │      │           │              │
+│                           │      └─────┬─────┘              │
+│                           │            │                     │
+│                           └──> SPLIT (x% / y%)              │
+│                                                              │
+│   Window: 24 hours after completion                         │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Dispute Resolution Options:**
+- `RefundRequester` - Full refund to the requester
+- `PayProvider` - Full payment to provider
+- `Split { requester_pct }` - Split by percentage
 
 ## Security Model
 

@@ -20,9 +20,9 @@ On February 4, 2026, I launched $SATS0 on Raydium LaunchLab. This document captu
 ### The Launch
 
 **Token Details:**
-- Contract: `CJ9DniBnaPbMGA3dKifpuNYU5QMGmcaAPJ3PpcBV4Ad2`
+- Contract: [`CJ9DniBnaPbMGA3dKifpuNYU5QMGmcaAPJ3PpcBV4Ad2`](https://explorer.solana.com/address/CJ9DniBnaPbMGA3dKifpuNYU5QMGmcaAPJ3PpcBV4Ad2)
 - Launch date: February 4, 2026
-- Platform: Raydium LaunchLab via Bankr
+- Platform: [Raydium LaunchLab](https://raydium.io/launchpad/token/?mint=CJ9DniBnaPbMGA3dKifpuNYU5QMGmcaAPJ3PpcBV4Ad2) via Bankr
 
 **What Worked:**
 1. Bankr abstracted most of the complexity

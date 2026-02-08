@@ -2,6 +2,31 @@
 
 All notable changes to AgentFund Protocol.
 
+## [0.1.1] - 2026-02-08
+
+### Added
+- **Dispute Resolution** - On-chain dispute system with 24h window
+  - `initiate_dispute` / `resolve_dispute` instructions
+  - Resolution options: RefundRequester, PayProvider, Split
+- **Anchor IDL** - Complete IDL with all 11 instructions and 7 account types
+- **Program Client** - Type-safe `AgentFundProgram` class with account fetchers
+- **Persistence Layer** - InvoiceStore, SubscriptionStore, SettlementStore
+  - File-based and in-memory adapters
+  - JSON serialization with BigInt/Date support
+- **SECURITY.md** - Security model documentation
+
+### Improved
+- Error handling in API client with proper exceptions
+- Registry search with `getProgramAccounts`
+- Jupiter integration with retry logic (exponential backoff)
+- CLI status command shows deployed program info
+- Architecture docs updated with dispute flow
+
+### Deployment
+- ✅ **Devnet deployed**: `5LqS68L9kfrB5h2D3NjJ9d8jEJz7egkyXUWEySGNZUeg`
+
+---
+
 ## [0.1.0] - 2026-02-08
 
 ### Added
