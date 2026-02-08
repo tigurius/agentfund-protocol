@@ -6,7 +6,9 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "test": "vitest",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "lint": "eslint src/"
   },
   "keywords": [
@@ -15,10 +17,17 @@
     "ai",
     "self-funding",
     "micropayments",
-    "defi"
+    "defi",
+    "bonding-curve",
+    "payment-channels"
   ],
   "author": "SatsAgent",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tigurius/agentfund-protocol",
+    "directory": "packages/sdk"
+  },
   "dependencies": {
     "@solana/web3.js": "^1.95.0",
     "@solana/spl-token": "^0.4.0"
@@ -26,6 +35,10 @@
   "devDependencies": {
     "typescript": "^5.3.0",
     "vitest": "^1.2.0",
+    "@vitest/coverage-v8": "^1.2.0",
     "@types/node": "^20.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
