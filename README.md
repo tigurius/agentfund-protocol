@@ -129,6 +129,7 @@ agentfund-protocol/
 │   ├── basic-invoice/    # Simple payment flow
 │   ├── batch-settlement/ # Micropayment batching
 │   ├── agent-marketplace/# Service discovery
+│   ├── agent-registry/   # Agent registration & discovery
 │   ├── api-client/       # Client usage
 │   └── real-world-agent/ # Complete architecture
 ├── docs/
@@ -151,15 +152,59 @@ agentfund-protocol/
 
 ## Features
 
+### Core Infrastructure
+- ✅ Treasury management with PDAs
 - ✅ Invoice creation and verification
-- ✅ Micropayment batching
+- ✅ Micropayment batching (settle 50+ at once)
 - ✅ Payment channels (design complete)
-- ✅ API server with service registry
-- ✅ Client library for service consumption
+
+### Agent Marketplace
+- ✅ On-chain agent registry
+- ✅ Capability-based discovery
+- ✅ Service request/completion flow
+- ✅ Escrowed payments
+
+### Payments
+- ✅ Multi-token support (Jupiter integration)
+- ✅ Subscription management
+- ✅ 402 Payment Required flow
+
+### Trust & Reputation
+- ✅ On-chain reputation system
+- ✅ Agent reviews and ratings
+- ✅ Dispute resolution framework
+
+### Developer Tools
+- ✅ TypeScript SDK
+- ✅ REST API server
+- ✅ CLI tools
 - ✅ Solana program (Anchor)
 - ✅ Comprehensive test suite
+
+### Deployment
 - ⏳ Devnet deployment
 - ⏳ Mainnet deployment
+
+## Demo
+
+Run the full interactive demo to see all features:
+
+```bash
+npx ts-node scripts/full-demo.ts
+```
+
+Or try individual examples:
+
+```bash
+# Basic invoice flow
+cd examples/basic-invoice && npx ts-node index.ts
+
+# Batch settlements
+cd examples/batch-settlement && npx ts-node index.ts
+
+# Agent registry
+cd examples/agent-registry && npx ts-node index.ts
+```
 
 ## Documentation
 

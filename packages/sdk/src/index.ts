@@ -35,6 +35,18 @@ export { EscrowManager, Escrow, EscrowCondition, EscrowStatus } from './escrow';
 // Reputation
 export { ReputationSystem, AgentReputation, ReputationEvent, reputation } from './reputation';
 
+// Agent Registry
+export { 
+  AgentRegistry, 
+  AgentProfile, 
+  ServiceRequest, 
+  AgentSearchFilters, 
+  RegistryStats,
+  STANDARD_CAPABILITIES,
+  StandardCapability,
+  createRegistry 
+} from './registry';
+
 // Utilities
 export * from './constants';
 export * from './pda';

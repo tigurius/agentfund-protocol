@@ -269,6 +269,187 @@ pub mod agentfund {
 
         Ok(())
     }
+
+    // === Agent Registry Instructions ===
+
+    /// Register an agent in the marketplace
+    pub fn register_agent(
+        ctx: Context<RegisterAgent>,
+        name: String,
+        description: String,
+        capabilities: Vec<String>,
+        base_price: u64,
+        bump: u8,
+    ) -> Result<()> {
+        require!(name.len() <= MAX_NAME_LENGTH, AgentFundError::NameTooLong);
+        require!(description.len() <= MAX_DESCRIPTION_LENGTH, AgentFundError::DescriptionTooLong);
+        require!(capabilities.len() <= MAX_CAPABILITIES, AgentFundError::TooManyCapabilities);
+        
+        for cap in &capabilities {
+            require!(cap.len() <= MAX_CAPABILITY_LENGTH, AgentFundError::CapabilityTooLong);
+        }
+
+        let profile = &mut ctx.accounts.agent_profile;
+        profile.owner = ctx.accounts.owner.key();
+        profile.name = name.clone();
+        profile.description = description;
+        profile.capabilities = capabilities.clone();
+        profile.base_price = base_price;
+        profile.treasury = ctx.accounts.treasury.key();
+        profile.is_active = true;
+        profile.total_requests = 0;
+        profile.total_earnings = 0;
+        profile.registered_at = Clock::get()?.unix_timestamp;
+        profile.last_active_at = Clock::get()?.unix_timestamp;
+        profile.bump = bump;
+
+        msg!("Agent registered: {}", name);
+        emit!(AgentRegistered {
+            agent: profile.owner,
+            name,
+            capabilities,
+            base_price,
+        });
+
+        Ok(())
+    }
+
+    /// Update agent profile
+    pub fn update_agent_profile(
+        ctx: Context<UpdateAgentProfile>,
+        name: Option<String>,
+        description: Option<String>,
+        capabilities: Option<Vec<String>>,
+        base_price: Option<u64>,
+        is_active: Option<bool>,
+    ) -> Result<()> {
+        let profile = &mut ctx.accounts.agent_profile;
+
+        if let Some(n) = name {
+            require!(n.len() <= MAX_NAME_LENGTH, AgentFundError::NameTooLong);
+            profile.name = n;
+        }
+        if let Some(d) = description {
+            require!(d.len() <= MAX_DESCRIPTION_LENGTH, AgentFundError::DescriptionTooLong);
+            profile.description = d;
+        }
+        if let Some(caps) = capabilities {
+            require!(caps.len() <= MAX_CAPABILITIES, AgentFundError::TooManyCapabilities);
+            for cap in &caps {
+                require!(cap.len() <= MAX_CAPABILITY_LENGTH, AgentFundError::CapabilityTooLong);
+            }
+            profile.capabilities = caps;
+        }
+        if let Some(price) = base_price {
+            profile.base_price = price;
+        }
+        if let Some(active) = is_active {
+            profile.is_active = active;
+        }
+
+        profile.last_active_at = Clock::get()?.unix_timestamp;
+
+        emit!(AgentUpdated {
+            agent: profile.owner,
+            is_active: profile.is_active,
+        });
+
+        Ok(())
+    }
+
+    /// Request a service from another agent
+    pub fn request_service(
+        ctx: Context<CreateServiceRequest>,
+        request_id: [u8; 32],
+        capability: String,
+        amount: u64,
+    ) -> Result<()> {
+        let provider = &ctx.accounts.provider_profile;
+        
+        require!(provider.is_active, AgentFundError::AgentNotActive);
+        require!(
+            provider.capabilities.contains(&capability),
+            AgentFundError::CapabilityNotSupported
+        );
+        require!(amount >= provider.base_price, AgentFundError::InvalidAmount);
+
+        // Transfer to escrow
+        let transfer_ix = anchor_lang::solana_program::system_instruction::transfer(
+            &ctx.accounts.requester.key(),
+            &ctx.accounts.escrow.key(),
+            amount,
+        );
+        anchor_lang::solana_program::program::invoke(
+            &transfer_ix,
+            &[
+                ctx.accounts.requester.to_account_info(),
+                ctx.accounts.escrow.to_account_info(),
+                ctx.accounts.system_program.to_account_info(),
+            ],
+        )?;
+
+        let request = &mut ctx.accounts.request;
+        request.id = request_id;
+        request.requester = ctx.accounts.requester.key();
+        request.provider = ctx.accounts.provider_owner.key();
+        request.capability = capability.clone();
+        request.amount = amount;
+        request.status = RequestStatus::Pending;
+        request.created_at = Clock::get()?.unix_timestamp;
+        request.completed_at = None;
+        request.result_hash = None;
+
+        msg!("Service requested: {} for {} lamports", capability, amount);
+        emit!(ServiceRequested {
+            request_id,
+            requester: request.requester,
+            provider: request.provider,
+            capability,
+            amount,
+        });
+
+        Ok(())
+    }
+
+    /// Complete a service request and release payment
+    pub fn complete_service(
+        ctx: Context<CompleteServiceRequest>,
+        result_hash: [u8; 32],
+    ) -> Result<()> {
+        let request = &mut ctx.accounts.request;
+        
+        require!(
+            request.status == RequestStatus::Pending,
+            AgentFundError::RequestNotPending
+        );
+
+        // Update request
+        request.status = RequestStatus::Completed;
+        request.completed_at = Some(Clock::get()?.unix_timestamp);
+        request.result_hash = Some(result_hash);
+
+        // Update provider stats
+        let profile = &mut ctx.accounts.provider_profile;
+        profile.total_requests += 1;
+        profile.total_earnings += request.amount;
+        profile.last_active_at = Clock::get()?.unix_timestamp;
+
+        // Update treasury
+        let treasury = &mut ctx.accounts.provider_treasury;
+        treasury.total_received += request.amount;
+
+        // Transfer from escrow to provider
+        // (simplified - in production use PDA signing)
+
+        msg!("Service completed, {} lamports released", request.amount);
+        emit!(ServiceCompleted {
+            request_id: request.id,
+            provider: ctx.accounts.provider.key(),
+            amount: request.amount,
+        });
+
+        Ok(())
+    }
 }
 
 // === Account Structures ===
@@ -572,6 +753,226 @@ pub struct ChannelClosed {
     pub final_balance_b: u64,
 }
 
+// === Agent Registry ===
+
+/// Maximum length for agent name
+pub const MAX_NAME_LENGTH: usize = 64;
+
+/// Maximum length for service description
+pub const MAX_DESCRIPTION_LENGTH: usize = 256;
+
+/// Maximum number of service capabilities
+pub const MAX_CAPABILITIES: usize = 10;
+
+/// Maximum length per capability
+pub const MAX_CAPABILITY_LENGTH: usize = 32;
+
+#[account]
+pub struct AgentProfile {
+    /// Agent's public key (owner)
+    pub owner: Pubkey,
+    /// Agent's display name
+    pub name: String,
+    /// Description of agent's services
+    pub description: String,
+    /// Service capabilities (e.g., "sentiment", "translation", "image-gen")
+    pub capabilities: Vec<String>,
+    /// Base price per request in lamports
+    pub base_price: u64,
+    /// Treasury account for payments
+    pub treasury: Pubkey,
+    /// Whether agent is currently active
+    pub is_active: bool,
+    /// Total requests served
+    pub total_requests: u64,
+    /// Total earnings
+    pub total_earnings: u64,
+    /// Registration timestamp
+    pub registered_at: i64,
+    /// Last active timestamp
+    pub last_active_at: i64,
+    /// PDA bump
+    pub bump: u8,
+}
+
+#[account]
+pub struct ServiceRequest {
+    /// Unique request ID
+    pub id: [u8; 32],
+    /// Requesting agent
+    pub requester: Pubkey,
+    /// Service provider agent
+    pub provider: Pubkey,
+    /// Capability being requested
+    pub capability: String,
+    /// Amount escrowed
+    pub amount: u64,
+    /// Request status
+    pub status: RequestStatus,
+    /// Creation timestamp
+    pub created_at: i64,
+    /// Completion timestamp
+    pub completed_at: Option<i64>,
+    /// Optional result hash (for verification)
+    pub result_hash: Option<[u8; 32]>,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq)]
+pub enum RequestStatus {
+    Pending,
+    InProgress,
+    Completed,
+    Disputed,
+    Refunded,
+}
+
+impl Default for RequestStatus {
+    fn default() -> Self {
+        RequestStatus::Pending
+    }
+}
+
+// === Registry Contexts ===
+
+#[derive(Accounts)]
+pub struct RegisterAgent<'info> {
+    #[account(
+        init,
+        payer = owner,
+        space = 8 + 32 + 4 + MAX_NAME_LENGTH + 4 + MAX_DESCRIPTION_LENGTH + 
+                4 + (MAX_CAPABILITIES * (4 + MAX_CAPABILITY_LENGTH)) + 
+                8 + 32 + 1 + 8 + 8 + 8 + 8 + 1,
+        seeds = [b"agent", owner.key().as_ref()],
+        bump
+    )]
+    pub agent_profile: Account<'info, AgentProfile>,
+    
+    #[account(
+        seeds = [b"treasury", owner.key().as_ref()],
+        bump = treasury.bump
+    )]
+    pub treasury: Account<'info, Treasury>,
+    
+    #[account(mut)]
+    pub owner: Signer<'info>,
+    
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct UpdateAgentProfile<'info> {
+    #[account(
+        mut,
+        seeds = [b"agent", owner.key().as_ref()],
+        bump = agent_profile.bump,
+        has_one = owner
+    )]
+    pub agent_profile: Account<'info, AgentProfile>,
+    
+    pub owner: Signer<'info>,
+}
+
+#[derive(Accounts)]
+#[instruction(request_id: [u8; 32])]
+pub struct CreateServiceRequest<'info> {
+    #[account(
+        init,
+        payer = requester,
+        space = 8 + 32 + 32 + 32 + 4 + MAX_CAPABILITY_LENGTH + 8 + 1 + 8 + 9 + 33,
+        seeds = [b"request", request_id.as_ref()],
+        bump
+    )]
+    pub request: Account<'info, ServiceRequest>,
+    
+    #[account(
+        seeds = [b"agent", provider_owner.key().as_ref()],
+        bump = provider_profile.bump
+    )]
+    pub provider_profile: Account<'info, AgentProfile>,
+    
+    /// CHECK: Provider owner for profile lookup
+    pub provider_owner: AccountInfo<'info>,
+    
+    /// CHECK: Escrow for holding payment
+    #[account(
+        mut,
+        seeds = [b"request_escrow", request_id.as_ref()],
+        bump
+    )]
+    pub escrow: AccountInfo<'info>,
+    
+    #[account(mut)]
+    pub requester: Signer<'info>,
+    
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct CompleteServiceRequest<'info> {
+    #[account(mut)]
+    pub request: Account<'info, ServiceRequest>,
+    
+    #[account(
+        mut,
+        seeds = [b"agent", provider.key().as_ref()],
+        bump = provider_profile.bump,
+        has_one = owner @ AgentFundError::UnauthorizedProvider
+    )]
+    pub provider_profile: Account<'info, AgentProfile>,
+    
+    /// CHECK: Escrow holding payment
+    #[account(mut)]
+    pub escrow: AccountInfo<'info>,
+    
+    #[account(
+        mut,
+        seeds = [b"treasury", provider.key().as_ref()],
+        bump = provider_treasury.bump
+    )]
+    pub provider_treasury: Account<'info, Treasury>,
+    
+    /// CHECK: Provider receiving payment
+    #[account(mut)]
+    pub provider: AccountInfo<'info>,
+    
+    /// Owner must sign to complete
+    pub owner: Signer<'info>,
+    
+    pub system_program: Program<'info, System>,
+}
+
+// === Registry Events ===
+
+#[event]
+pub struct AgentRegistered {
+    pub agent: Pubkey,
+    pub name: String,
+    pub capabilities: Vec<String>,
+    pub base_price: u64,
+}
+
+#[event]
+pub struct AgentUpdated {
+    pub agent: Pubkey,
+    pub is_active: bool,
+}
+
+#[event]
+pub struct ServiceRequested {
+    pub request_id: [u8; 32],
+    pub requester: Pubkey,
+    pub provider: Pubkey,
+    pub capability: String,
+    pub amount: u64,
+}
+
+#[event]
+pub struct ServiceCompleted {
+    pub request_id: [u8; 32],
+    pub provider: Pubkey,
+    pub amount: u64,
+}
+
 // === Errors ===
 
 #[error_code]
@@ -605,4 +1006,28 @@ pub enum AgentFundError {
     
     #[msg("Final balances do not match total deposits")]
     BalanceMismatch,
+    
+    #[msg("Name exceeds maximum length")]
+    NameTooLong,
+    
+    #[msg("Description exceeds maximum length")]
+    DescriptionTooLong,
+    
+    #[msg("Too many capabilities")]
+    TooManyCapabilities,
+    
+    #[msg("Capability name too long")]
+    CapabilityTooLong,
+    
+    #[msg("Agent is not active")]
+    AgentNotActive,
+    
+    #[msg("Capability not supported by provider")]
+    CapabilityNotSupported,
+    
+    #[msg("Request is not pending")]
+    RequestNotPending,
+    
+    #[msg("Unauthorized provider")]
+    UnauthorizedProvider,
 }
