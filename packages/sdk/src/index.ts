@@ -17,6 +17,24 @@ export { SelfFunding } from './self-funding';
 export { Micropayments } from './micropayments';
 export { Treasury } from './treasury';
 
+// Webhooks
+export { WebhookManager, webhooks, WebhookEvent, WebhookEventType, WebhookConfig } from './webhooks';
+
+// Subscriptions
+export { SubscriptionManager, Subscription, SubscriptionInterval, SubscriptionStatus } from './subscriptions';
+
+// Jupiter Integration
+export { JupiterIntegration, SwapQuote, SwapResult, TOKENS } from './jupiter';
+
+// Multi-token payments
+export { MultiTokenPayments, TokenPaymentConfig, TokenInvoice } from './multi-token';
+
+// Escrow
+export { EscrowManager, Escrow, EscrowCondition, EscrowStatus } from './escrow';
+
+// Reputation
+export { ReputationSystem, AgentReputation, ReputationEvent, reputation } from './reputation';
+
 // Utilities
 export * from './constants';
 export * from './pda';

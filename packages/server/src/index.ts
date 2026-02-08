@@ -13,6 +13,9 @@ import { Keypair } from '@solana/web3.js';
 import { invoiceRouter } from './routes/invoices';
 import { servicesRouter } from './routes/services';
 import { healthRouter } from './routes/health';
+import { subscriptionsRouter } from './routes/subscriptions';
+import { webhooksRouter } from './routes/webhooks';
+import { metricsRouter } from './routes/metrics';
 import { errorHandler } from './middleware/error';
 import { requestLogger } from './middleware/logger';
 
@@ -45,6 +48,9 @@ app.locals.agentfund = agentfund;
 app.use('/health', healthRouter);
 app.use('/invoices', invoiceRouter);
 app.use('/services', servicesRouter);
+app.use('/subscriptions', subscriptionsRouter);
+app.use('/webhooks', webhooksRouter);
+app.use('/metrics', metricsRouter);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -56,6 +62,9 @@ app.get('/', (req, res) => {
       health: '/health',
       invoices: '/invoices',
       services: '/services',
+      subscriptions: '/subscriptions',
+      webhooks: '/webhooks',
+      metrics: '/metrics',
     },
     docs: 'https://github.com/tigurius/agentfund-protocol',
   });
