@@ -6,6 +6,9 @@
 // Main class
 export { AgentFund } from './agentfund';
 
+// API Client
+export { AgentFundClient } from './client';
+
 // Types
 export { Invoice, PaymentStatus, BatchSettlement, SelfFundingConfig, TreasuryConfig } from './types';
 
