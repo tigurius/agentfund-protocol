@@ -2,6 +2,30 @@
 
 All notable changes to AgentFund Protocol.
 
+## [0.1.2] - 2026-02-08
+
+### Added
+- **93 passing tests** across 7 test suites (agentfund, micropayments, treasury, streaming, registry, pda, escrow)
+- **TypeDoc configuration** for API documentation generation
+- **Animated terminal demo** (docs/demo.svg) embedded in README
+- **GitHub templates** - Bug report, feature request, pull request
+- **CODE_OF_CONDUCT.md** (Contributor Covenant v2.1)
+- **Escrow test suite** - 12 tests covering create, fund, release, dispute, resolve, expire
+
+### Fixed
+- TypeScript compilation: 0 errors (strict mode)
+- `workspace:*` references replaced for npm compatibility
+- `response.json()` type safety across client, jupiter, self-funding modules
+- Registry `Keypair.toBuffer()` → `.publicKey.toBuffer()`
+- Batch settlement test assertions
+
+### Improved
+- JSDoc `@fileoverview` + `@module` on all 20 SDK modules
+- README: test badge, TypeScript badge, demo animation, security section
+- `package-lock.json` committed for reproducible builds
+
+---
+
 ## [0.1.1] - 2026-02-08
 
 ### Added
