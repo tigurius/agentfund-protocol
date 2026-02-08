@@ -1,8 +1,32 @@
 /**
- * Streaming Payments Module
- * 
- * Real-time payment streams for continuous agent services.
- * Useful for long-running tasks, API subscriptions, or compute time.
+ * @fileoverview Streaming Payments module for AgentFund Protocol.
+ *
+ * Enables real-time, continuous payment streams between agents on Solana.
+ * Streams allow a sender to lock funds that are released to a recipient
+ * linearly over time — ideal for long-running tasks, API subscriptions,
+ * compute-time billing, and any scenario requiring pay-as-you-go semantics.
+ *
+ * @module streaming
+ * @author SatsAgent
+ * @license MIT
+ *
+ * @example
+ * ```typescript
+ * import { StreamingPayments, STREAM_DURATIONS } from '@agentfund/sdk';
+ * import { Connection, Keypair, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
+ *
+ * const connection = new Connection('https://api.devnet.solana.com');
+ * const streaming = new StreamingPayments(connection);
+ *
+ * const stream = await streaming.createStream(senderKeypair, {
+ *   recipient: recipientPubkey,
+ *   totalAmount: BigInt(1 * LAMPORTS_PER_SOL),
+ *   durationSeconds: STREAM_DURATIONS.HOUR,
+ * });
+ *
+ * // Later — recipient withdraws accrued funds
+ * const { amount } = await streaming.withdraw(recipientKeypair, stream.id);
+ * ```
  */
 
 import { PublicKey, Connection, Keypair, LAMPORTS_PER_SOL } from '@solana/web3.js';
@@ -89,7 +113,30 @@ export interface StreamEvent {
 }
 
 /**
- * Streaming Payments Manager
+ * Streaming Payments Manager.
+ *
+ * Manages the full lifecycle of payment streams — creation, withdrawal,
+ * pause/resume, cancellation, and event subscription. Streams release
+ * funds linearly over a configured duration, enabling real-time billing.
+ *
+ * @class StreamingPayments
+ *
+ * @example
+ * ```typescript
+ * const streaming = new StreamingPayments(connection);
+ *
+ * // Create a 1-hour stream paying 1 SOL
+ * const stream = await streaming.createStream(sender, {
+ *   recipient: recipientPubkey,
+ *   totalAmount: BigInt(LAMPORTS_PER_SOL),
+ *   durationSeconds: 3600,
+ * });
+ *
+ * // Monitor events
+ * streaming.onEvent(stream.id, (event) => {
+ *   console.log(`Event: ${event.type}`, event.amount);
+ * });
+ * ```
  */
 export class StreamingPayments {
   private connection: Connection;
@@ -97,6 +144,12 @@ export class StreamingPayments {
   private streams: Map<string, PaymentStream> = new Map();
   private eventListeners: Map<string, ((event: StreamEvent) => void)[]> = new Map();
 
+  /**
+   * Create a new StreamingPayments manager.
+   *
+   * @param {Connection} [connection] - Solana RPC connection. Defaults to devnet.
+   * @param {PublicKey} [programId] - AgentFund program ID. Defaults to {@link PROGRAM_ID}.
+   */
   constructor(
     connection?: Connection,
     programId: PublicKey = PROGRAM_ID
@@ -106,7 +159,16 @@ export class StreamingPayments {
   }
 
   /**
-   * Derive stream PDA
+   * Derive the Program Derived Address (PDA) for a payment stream.
+   *
+   * @param {Buffer} streamId - 32-byte stream identifier buffer.
+   * @returns {[PublicKey, number]} Tuple of the PDA public key and bump seed.
+   *
+   * @example
+   * ```typescript
+   * const idBuffer = Buffer.alloc(32);
+   * const [pda, bump] = streaming.getStreamPDA(idBuffer);
+   * ```
    */
   getStreamPDA(streamId: Buffer): [PublicKey, number] {
     return PublicKey.findProgramAddressSync(
@@ -116,7 +178,25 @@ export class StreamingPayments {
   }
 
   /**
-   * Create a new payment stream
+   * Create a new payment stream that releases funds linearly over time.
+   *
+   * @param {Keypair} sender - The keypair funding the stream.
+   * @param {StreamConfig} config - Stream configuration (recipient, amount, duration, etc.).
+   * @returns {Promise<PaymentStream>} The newly created payment stream.
+   * @throws {Error} If the stream cannot be created on-chain.
+   *
+   * @example
+   * ```typescript
+   * const stream = await streaming.createStream(senderKeypair, {
+   *   recipient: recipientPubkey,
+   *   totalAmount: BigInt(500_000_000), // 0.5 SOL
+   *   durationSeconds: 3600,
+   *   pausable: true,
+   *   cancellable: true,
+   * });
+   * console.log('Stream ID:', stream.id);
+   * console.log('Rate:', stream.ratePerSecond, 'lamports/sec');
+   * ```
    */
   async createStream(
     sender: Keypair,
@@ -158,7 +238,21 @@ export class StreamingPayments {
   }
 
   /**
-   * Get available balance for withdrawal
+   * Calculate the amount currently available for withdrawal from a stream.
+   *
+   * The available balance is the linearly-accrued amount minus what has
+   * already been withdrawn. Returns `0n` if the stream is paused, inactive,
+   * or hasn't started yet.
+   *
+   * @param {string} streamId - The stream identifier.
+   * @returns {bigint} Available withdrawal amount in lamports.
+   * @throws {Error} If the stream ID is not found.
+   *
+   * @example
+   * ```typescript
+   * const available = streaming.getAvailableBalance(stream.id);
+   * console.log('Can withdraw:', available, 'lamports');
+   * ```
    */
   getAvailableBalance(streamId: string): bigint {
     const stream = this.streams.get(streamId);
@@ -185,7 +279,21 @@ export class StreamingPayments {
   }
 
   /**
-   * Withdraw available funds (recipient)
+   * Withdraw accrued funds from a stream. Only the stream recipient may call this.
+   *
+   * @param {Keypair} recipient - Keypair of the stream recipient.
+   * @param {string} streamId - The stream identifier.
+   * @param {bigint} [amount] - Specific amount to withdraw. Defaults to all available.
+   * @returns {Promise<{ signature: string; amount: bigint }>} Transaction signature and withdrawn amount.
+   * @throws {Error} If the stream is not found.
+   * @throws {Error} If the caller is not the recipient (`Unauthorized`).
+   * @throws {Error} If no funds are available for withdrawal.
+   *
+   * @example
+   * ```typescript
+   * const { signature, amount } = await streaming.withdraw(recipientKeypair, stream.id);
+   * console.log(`Withdrew ${amount} lamports — tx: ${signature}`);
+   * ```
    */
   async withdraw(
     recipient: Keypair,
@@ -231,7 +339,21 @@ export class StreamingPayments {
   }
 
   /**
-   * Pause a stream (sender only)
+   * Pause an active stream. Only the sender (funder) may pause.
+   *
+   * While paused, no additional funds accrue to the recipient.
+   * The stream can be resumed later via {@link resumeStream}.
+   *
+   * @param {Keypair} sender - Keypair of the stream sender/funder.
+   * @param {string} streamId - The stream identifier.
+   * @throws {Error} If the stream is not found.
+   * @throws {Error} If the caller is not the sender (`Unauthorized`).
+   * @throws {Error} If the stream is already paused.
+   *
+   * @example
+   * ```typescript
+   * await streaming.pauseStream(senderKeypair, stream.id);
+   * ```
    */
   async pauseStream(sender: Keypair, streamId: string): Promise<void> {
     const stream = this.streams.get(streamId);
@@ -252,7 +374,18 @@ export class StreamingPayments {
   }
 
   /**
-   * Resume a paused stream
+   * Resume a previously paused stream. The end time is extended by the pause duration.
+   *
+   * @param {Keypair} sender - Keypair of the stream sender/funder.
+   * @param {string} streamId - The stream identifier.
+   * @throws {Error} If the stream is not found.
+   * @throws {Error} If the caller is not the sender (`Unauthorized`).
+   * @throws {Error} If the stream is not currently paused.
+   *
+   * @example
+   * ```typescript
+   * await streaming.resumeStream(senderKeypair, stream.id);
+   * ```
    */
   async resumeStream(sender: Keypair, streamId: string): Promise<void> {
     const stream = this.streams.get(streamId);
@@ -277,7 +410,23 @@ export class StreamingPayments {
   }
 
   /**
-   * Cancel a stream and refund remaining funds
+   * Cancel a stream and refund un-streamed funds to the sender.
+   *
+   * The refund is calculated as: `totalAmount - withdrawnAmount - availableBalance`.
+   * Already-accrued (but un-withdrawn) funds remain claimable by the recipient.
+   *
+   * @param {Keypair} sender - Keypair of the stream sender/funder.
+   * @param {string} streamId - The stream identifier.
+   * @returns {Promise<{ refundAmount: bigint }>} The lamports refunded to the sender.
+   * @throws {Error} If the stream is not found.
+   * @throws {Error} If the caller is not the sender (`Unauthorized`).
+   * @throws {Error} If the stream is already cancelled or completed.
+   *
+   * @example
+   * ```typescript
+   * const { refundAmount } = await streaming.cancelStream(senderKeypair, stream.id);
+   * console.log('Refunded:', refundAmount, 'lamports');
+   * ```
    */
   async cancelStream(
     sender: Keypair,
@@ -313,14 +462,26 @@ export class StreamingPayments {
   }
 
   /**
-   * Get stream by ID
+   * Retrieve a stream by its unique identifier.
+   *
+   * @param {string} streamId - The stream identifier.
+   * @returns {PaymentStream | undefined} The stream, or `undefined` if not found.
    */
   getStream(streamId: string): PaymentStream | undefined {
     return this.streams.get(streamId);
   }
 
   /**
-   * Get all streams for an address
+   * Get all streams where the given address is either sender or recipient.
+   *
+   * @param {PublicKey} address - The Solana public key to filter by.
+   * @returns {PaymentStream[]} Array of matching payment streams.
+   *
+   * @example
+   * ```typescript
+   * const myStreams = streaming.getStreamsFor(wallet.publicKey);
+   * console.log('Active streams:', myStreams.filter(s => s.status === 'active').length);
+   * ```
    */
   getStreamsFor(address: PublicKey): PaymentStream[] {
     return Array.from(this.streams.values()).filter(
@@ -329,7 +490,19 @@ export class StreamingPayments {
   }
 
   /**
-   * Subscribe to stream events
+   * Subscribe to lifecycle events for a specific stream.
+   *
+   * @param {string} streamId - The stream identifier to listen on.
+   * @param {(event: StreamEvent) => void} callback - Invoked for each event.
+   *
+   * @example
+   * ```typescript
+   * streaming.onEvent(stream.id, (event) => {
+   *   if (event.type === 'withdrawn') {
+   *     console.log('Recipient withdrew', event.amount, 'lamports');
+   *   }
+   * });
+   * ```
    */
   onEvent(streamId: string, callback: (event: StreamEvent) => void): void {
     const listeners = this.eventListeners.get(streamId) || [];
@@ -338,7 +511,8 @@ export class StreamingPayments {
   }
 
   /**
-   * Emit stream event
+   * Emit an event to all registered listeners for a stream.
+   * @internal
    */
   private emitEvent(streamId: string, event: StreamEvent): void {
     const listeners = this.eventListeners.get(streamId) || [];
@@ -348,7 +522,19 @@ export class StreamingPayments {
   }
 
   /**
-   * Estimate total cost for a stream
+   * Estimate the cost breakdown for a stream configuration.
+   *
+   * @param {Omit<StreamConfig, 'recipient'>} config - Stream parameters (without recipient).
+   * @returns {{ totalAmount: bigint; ratePerSecond: bigint; ratePerMinute: bigint; ratePerHour: bigint; ratePerDay: bigint }} Cost breakdown at various time granularities.
+   *
+   * @example
+   * ```typescript
+   * const cost = streaming.estimateCost({
+   *   totalAmount: BigInt(LAMPORTS_PER_SOL),
+   *   durationSeconds: STREAM_DURATIONS.DAY,
+   * });
+   * console.log('Rate per hour:', cost.ratePerHour, 'lamports');
+   * ```
    */
   estimateCost(config: Omit<StreamConfig, 'recipient'>): {
     totalAmount: bigint;
@@ -369,14 +555,28 @@ export class StreamingPayments {
 }
 
 /**
- * Create a streaming payments manager
+ * Factory function to create a {@link StreamingPayments} instance.
+ *
+ * @param {Connection} [connection] - Solana RPC connection. Defaults to devnet.
+ * @returns {StreamingPayments} A new streaming payments manager.
+ *
+ * @example
+ * ```typescript
+ * const streaming = createStreamingPayments(connection);
+ * ```
  */
 export function createStreamingPayments(connection?: Connection): StreamingPayments {
   return new StreamingPayments(connection);
 }
 
 /**
- * Predefined stream durations
+ * Predefined stream durations in seconds for common billing periods.
+ *
+ * @example
+ * ```typescript
+ * import { STREAM_DURATIONS } from '@agentfund/sdk';
+ * console.log(STREAM_DURATIONS.HOUR); // 3600
+ * ```
  */
 export const STREAM_DURATIONS = {
   MINUTE: 60,

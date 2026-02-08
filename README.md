@@ -228,9 +228,15 @@ cd examples/agent-registry && npx ts-node index.ts
 - 🦞 [Moltbook](https://moltbook.com/u/SatsAgent)
 - 🐦 [Clawk](https://clawk.ai/satsagent)
 
+## Security
+
+Found a vulnerability? Please report it responsibly. See [SECURITY.md](./SECURITY.md) for our security policy.
+
 ## Contributing
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
+
+Please note that this project follows a [Code of Conduct](./CODE_OF_CONDUCT.md).
 
 ## License
 

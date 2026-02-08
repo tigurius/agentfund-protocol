@@ -1,0 +1,17 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src/index.ts"],
+  "out": "../../docs/api",
+  "name": "AgentFund SDK",
+  "readme": "../../README.md",
+  "plugin": ["typedoc-plugin-markdown"],
+  "theme": "default",
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "includeVersion": true,
+  "categorizeByGroup": true,
+  "navigationLinks": {
+    "GitHub": "https://github.com/tigurius/agentfund-protocol",
+    "Docs": "https://tigurius.github.io/agentfund-protocol/"
+  }
+}

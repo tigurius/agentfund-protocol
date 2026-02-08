@@ -1,97 +1,95 @@
-# Security
+# Security Policy
 
-## Reporting Vulnerabilities
+## Supported Versions
 
-If you discover a security vulnerability, please report it responsibly:
+| Version | Supported          |
+| ------- | ------------------ |
+| 0.1.x   | :white_check_mark: |
 
-1. **Do NOT** open a public issue
-2. Email security concerns to the project maintainers
-3. Allow 48 hours for initial response
+## Reporting a Vulnerability
 
-## Security Model
+We take the security of AgentFund Protocol seriously. If you discover a security vulnerability, please report it responsibly.
 
-### On-Chain (Anchor Program)
+### How to Report
 
-**Access Control:**
-- Treasury operations require owner signature
-- Invoice payments require payer signature
-- Service completion requires provider signature
-- Disputes can only be initiated by requester or provider
+1. **DO NOT** open a public GitHub issue for security vulnerabilities.
+2. Email your findings to **security@agentfund.dev** (or DM [@SatsAgent](https://clawstr.com/satsagent)).
+3. Include:
+   - Description of the vulnerability
+   - Steps to reproduce
+   - Potential impact assessment
+   - Suggested fix (if any)
 
-**Fund Safety:**
-- All funds held in PDAs (Program Derived Addresses)
-- No admin keys that can drain funds
-- Escrow pattern for service requests
-- 24-hour dispute window for resolution
+### Response Timeline
 
-**Input Validation:**
-- Maximum memo length: 256 bytes
-- Maximum capabilities: 10 per agent
-- Amount must be > 0
-- Expiry must be in future
+- **Acknowledgement**: Within 48 hours
+- **Initial assessment**: Within 5 business days
+- **Resolution target**: Within 30 days for critical issues
 
-### SDK (TypeScript)
+### What to Expect
 
-**Wallet Security:**
-- Never store private keys in code
-- Use environment variables or secure vaults
-- Keypair should be session-scoped when possible
+- Confirmation that we received your report
+- Regular updates on our progress
+- Credit in the release notes (unless you prefer anonymity)
 
-**API Security:**
-- All client methods validate inputs
-- Error messages don't leak sensitive data
-- Retry logic with exponential backoff (no infinite loops)
+## Scope
 
-**Persistence:**
-- File storage uses sanitized filenames
-- No SQL injection (no SQL used)
-- BigInt/Date serialization handles edge cases
+### In Scope
 
-### Server (REST API)
+- **Solana programs** (`packages/contracts/`) — on-chain logic vulnerabilities
+- **SDK** (`packages/sdk/`) — logic bugs that could lead to fund loss
+- **Server** (`packages/server/`) — API authentication/authorization bypasses
+- **Treasury management** — PDA derivation, unauthorized access, fund drainage
+- **Micropayment batching** — settlement manipulation, double-spend vectors
+- **Streaming payments** — unauthorized withdrawal, pause/cancel exploits
 
-**Rate Limiting:**
-- 100 requests per minute per IP
-- Prevents abuse and DoS
+### Out of Scope
 
-**Input Validation:**
-- All endpoints validate required fields
-- Type checking on all inputs
-- Sanitized responses
+- Issues in third-party dependencies (report upstream)
+- Denial-of-service attacks on public devnet RPCs
+- Social engineering attacks
+- Issues requiring physical access to a device
 
-**CORS:**
-- Configurable origin restrictions
-- Helmet.js for security headers
+## Security Considerations
 
-## Known Limitations
+### Smart Contract Security
 
-1. **Off-chain state**: Invoice/subscription data stored locally; loss = data loss
-2. **Simulated payments**: `simulate-payment` endpoint is for testing only
-3. **No encryption**: Persistence layer stores data in plaintext JSON
-4. **Single-party disputes**: Current dispute resolution is simplified
+- All PDAs are derived deterministically with proper seed validation
+- Treasury operations require owner signature verification
+- Invoice IDs use cryptographically secure random generation
+- Batch settlements validate all invoice states before execution
 
-## Audit Status
+### Key Management
 
-- [ ] External security audit (planned post-hackathon)
-- [x] Internal code review
-- [x] Anchor program constraint validation
-- [x] Input sanitization
+- The SDK never stores private keys — callers provide `Keypair` instances
+- No secrets are logged or transmitted to external services
+- Connection objects should use authenticated RPC endpoints in production
 
-## Dependencies
+### Micropayment Security
 
-All dependencies are from trusted sources:
-- `@solana/web3.js` - Official Solana SDK
-- `@coral-xyz/anchor` - Anchor framework
-- `express` - Battle-tested Node.js framework
-- No known vulnerable dependencies
+- Off-chain payment records are validated against on-chain state during settlement
+- Batch settlements are atomic — all-or-nothing execution
+- Expired invoices cannot be settled or double-claimed
+
+### Streaming Payment Security
+
+- Only the designated sender can pause, resume, or cancel a stream
+- Only the designated recipient can withdraw from a stream
+- Withdrawal amounts are bounded by the linearly-accrued balance
+- Pause durations correctly extend the stream end time
 
 ## Best Practices for Users
 
-1. **Use devnet first** - Test thoroughly before mainnet
-2. **Backup wallets** - Keep secure backups of keypairs
-3. **Monitor transactions** - Watch for unexpected activity
-4. **Update regularly** - Keep SDK version current
-5. **Limit permissions** - Use minimal required access
+1. **Use devnet for testing** — never test with real funds
+2. **Rotate keypairs** — use dedicated agent wallets, not personal wallets
+3. **Set reasonable expiry times** on invoices
+4. **Monitor treasury balances** — set up alerts for unexpected changes
+5. **Pin dependency versions** — avoid unexpected breaking changes
+
+## Disclosure Policy
+
+We follow [Coordinated Vulnerability Disclosure](https://vuls.cert.org/confluence/display/Wiki/Coordinated+Vulnerability+Disclosure+Guidance). We request a 90-day disclosure window from the initial report to allow time for a fix.
 
 ---
 
-*Last updated: February 2026*
+Thank you for helping keep AgentFund Protocol and its users safe.
