@@ -6,7 +6,7 @@ import { PublicKey } from '@solana/web3.js';
 
 // Program IDs
 export const AGENTFUND_PROGRAM_ID = new PublicKey(
-  'AgntFund1111111111111111111111111111111111'
+  '5LqS68L9kfrB5h2D3NjJ9d8jEJz7egkyXUWEySGNZUeg'
 );
 
 // PDA Seeds

@@ -12,7 +12,7 @@ use anchor_lang::prelude::*;
 // anchor-spl removed for rustc 1.79 compatibility
 // Token functionality can be added when platform-tools updates
 
-declare_id!("CU6rvyrE2d1NCAFaixBhYLLnEuyC86yHCNPCzLXwA65U");
+declare_id!("5LqS68L9kfrB5h2D3NjJ9d8jEJz7egkyXUWEySGNZUeg");
 
 /// Maximum invoices per batch settlement
 pub const MAX_BATCH_SIZE: usize = 50;
