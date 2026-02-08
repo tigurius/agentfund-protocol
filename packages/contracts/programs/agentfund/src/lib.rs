@@ -20,6 +20,12 @@ pub const MAX_BATCH_SIZE: usize = 50;
 /// Maximum memo length
 pub const MAX_MEMO_LENGTH: usize = 256;
 
+/// Dispute window in seconds (24 hours)
+pub const DISPUTE_WINDOW_SECONDS: i64 = 86400;
+
+/// Maximum dispute reason length
+pub const MAX_DISPUTE_REASON_LENGTH: usize = 512;
+
 #[program]
 pub mod agentfund {
     use super::*;
@@ -451,6 +457,101 @@ pub mod agentfund {
 
         Ok(())
     }
+
+    // === Dispute Resolution ===
+
+    /// Initiate a dispute on a service request
+    /// Either requester or provider can initiate within dispute window
+    pub fn initiate_dispute(
+        ctx: Context<InitiateDispute>,
+        reason: String,
+    ) -> Result<()> {
+        let request = &mut ctx.accounts.request;
+        let dispute = &mut ctx.accounts.dispute;
+
+        require!(
+            request.status == RequestStatus::Pending || request.status == RequestStatus::Completed,
+            AgentFundError::CannotDispute
+        );
+
+        // Must be within dispute window (24 hours after creation/completion)
+        let now = Clock::get()?.unix_timestamp;
+        let reference_time = request.completed_at.unwrap_or(request.created_at);
+        require!(
+            now - reference_time <= DISPUTE_WINDOW_SECONDS,
+            AgentFundError::DisputeWindowClosed
+        );
+
+        // Update request status
+        request.status = RequestStatus::Disputed;
+
+        // Initialize dispute
+        dispute.request_id = request.id;
+        dispute.initiator = ctx.accounts.initiator.key();
+        dispute.reason = reason.clone();
+        dispute.status = DisputeStatus::Open;
+        dispute.created_at = now;
+        dispute.resolved_at = None;
+        dispute.resolution = None;
+
+        msg!("Dispute initiated for request by {}", dispute.initiator);
+        emit!(DisputeInitiated {
+            request_id: request.id,
+            initiator: dispute.initiator,
+            reason,
+        });
+
+        Ok(())
+    }
+
+    /// Resolve a dispute (currently by provider/requester agreement)
+    /// In production: could use an arbiter DAO or oracle
+    pub fn resolve_dispute(
+        ctx: Context<ResolveDispute>,
+        resolution: DisputeResolution,
+    ) -> Result<()> {
+        let dispute = &mut ctx.accounts.dispute;
+        let request = &mut ctx.accounts.request;
+
+        require!(
+            dispute.status == DisputeStatus::Open,
+            AgentFundError::DisputeNotOpen
+        );
+
+        let now = Clock::get()?.unix_timestamp;
+        
+        // Apply resolution
+        match resolution {
+            DisputeResolution::RefundRequester => {
+                // Refund full amount to requester
+                request.status = RequestStatus::Refunded;
+                msg!("Dispute resolved: full refund to requester");
+            }
+            DisputeResolution::PayProvider => {
+                // Pay full amount to provider
+                request.status = RequestStatus::Completed;
+                msg!("Dispute resolved: full payment to provider");
+            }
+            DisputeResolution::Split { requester_pct } => {
+                // Split payment based on percentage
+                require!(requester_pct <= 100, AgentFundError::InvalidSplitPct);
+                request.status = RequestStatus::Completed;
+                msg!("Dispute resolved: {}% to requester, {}% to provider", 
+                     requester_pct, 100 - requester_pct);
+            }
+        }
+
+        dispute.status = DisputeStatus::Resolved;
+        dispute.resolved_at = Some(now);
+        dispute.resolution = Some(resolution.clone());
+
+        emit!(DisputeResolved {
+            request_id: request.id,
+            resolution,
+        });
+
+        Ok(())
+    }
 }
 
 // === Account Structures ===
@@ -827,6 +928,49 @@ pub enum RequestStatus {
     Refunded,
 }
 
+/// Dispute for a service request
+#[account]
+pub struct Dispute {
+    /// Request ID being disputed
+    pub request_id: [u8; 32],
+    /// Who initiated the dispute
+    pub initiator: Pubkey,
+    /// Reason for dispute
+    pub reason: String,
+    /// Dispute status
+    pub status: DisputeStatus,
+    /// Creation timestamp
+    pub created_at: i64,
+    /// Resolution timestamp
+    pub resolved_at: Option<i64>,
+    /// Resolution details
+    pub resolution: Option<DisputeResolution>,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq)]
+pub enum DisputeStatus {
+    Open,
+    UnderReview,
+    Resolved,
+    Expired,
+}
+
+impl Default for DisputeStatus {
+    fn default() -> Self {
+        DisputeStatus::Open
+    }
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq)]
+pub enum DisputeResolution {
+    /// Full refund to requester
+    RefundRequester,
+    /// Full payment to provider
+    PayProvider,
+    /// Split payment by percentage
+    Split { requester_pct: u8 },
+}
+
 impl Default for RequestStatus {
     fn default() -> Self {
         RequestStatus::Pending
@@ -942,6 +1086,67 @@ pub struct CompleteServiceRequest<'info> {
     pub system_program: Program<'info, System>,
 }
 
+// === Dispute Contexts ===
+
+#[derive(Accounts)]
+pub struct InitiateDispute<'info> {
+    #[account(mut)]
+    pub request: Account<'info, ServiceRequest>,
+    
+    #[account(
+        init,
+        payer = initiator,
+        space = 8 + 32 + 32 + 4 + MAX_DISPUTE_REASON_LENGTH + 1 + 8 + 9 + 33,
+        seeds = [b"dispute", request.id.as_ref()],
+        bump
+    )]
+    pub dispute: Account<'info, Dispute>,
+    
+    /// Must be either requester or provider
+    #[account(
+        mut,
+        constraint = initiator.key() == request.requester || initiator.key() == request.provider
+    )]
+    pub initiator: Signer<'info>,
+    
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct ResolveDispute<'info> {
+    #[account(mut)]
+    pub request: Account<'info, ServiceRequest>,
+    
+    #[account(
+        mut,
+        seeds = [b"dispute", request.id.as_ref()],
+        bump,
+        constraint = dispute.status == DisputeStatus::Open
+    )]
+    pub dispute: Account<'info, Dispute>,
+    
+    /// Both parties must agree, or use arbiter (simplified here)
+    /// In production: would check multi-sig or arbiter DAO vote
+    #[account(
+        constraint = resolver.key() == request.requester || resolver.key() == request.provider
+    )]
+    pub resolver: Signer<'info>,
+    
+    /// CHECK: Requester for potential refund
+    #[account(mut, constraint = requester.key() == request.requester)]
+    pub requester: AccountInfo<'info>,
+    
+    /// CHECK: Provider for potential payment
+    #[account(mut, constraint = provider.key() == request.provider)]
+    pub provider: AccountInfo<'info>,
+    
+    /// CHECK: Escrow holding funds
+    #[account(mut)]
+    pub escrow: AccountInfo<'info>,
+    
+    pub system_program: Program<'info, System>,
+}
+
 // === Registry Events ===
 
 #[event]
@@ -972,6 +1177,21 @@ pub struct ServiceCompleted {
     pub request_id: [u8; 32],
     pub provider: Pubkey,
     pub amount: u64,
+}
+
+// === Dispute Events ===
+
+#[event]
+pub struct DisputeInitiated {
+    pub request_id: [u8; 32],
+    pub initiator: Pubkey,
+    pub reason: String,
+}
+
+#[event]
+pub struct DisputeResolved {
+    pub request_id: [u8; 32],
+    pub resolution: DisputeResolution,
 }
 
 // === Errors ===
@@ -1031,4 +1251,16 @@ pub enum AgentFundError {
     
     #[msg("Unauthorized provider")]
     UnauthorizedProvider,
+    
+    #[msg("Cannot dispute this request")]
+    CannotDispute,
+    
+    #[msg("Dispute window has closed")]
+    DisputeWindowClosed,
+    
+    #[msg("Dispute is not open")]
+    DisputeNotOpen,
+    
+    #[msg("Invalid split percentage")]
+    InvalidSplitPct,
 }

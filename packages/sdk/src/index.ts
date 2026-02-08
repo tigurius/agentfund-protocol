@@ -65,3 +65,26 @@ export * from './pda';
 
 // Instructions (for advanced usage)
 export * from './instructions';
+
+// Program Client (with IDL)
+export { 
+  AgentFundProgram, 
+  createProgram,
+  IDL,
+  TreasuryAccount,
+  InvoiceAccount,
+  AgentProfileAccount,
+  ServiceRequestAccount
+} from './program';
+
+// Persistence
+export {
+  createPersistence,
+  createMemoryPersistence,
+  InvoiceStore,
+  SubscriptionStore,
+  SettlementStore,
+  FileStorageAdapter,
+  MemoryStorageAdapter,
+  StorageAdapter
+} from './persistence';

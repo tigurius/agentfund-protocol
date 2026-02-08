@@ -1,0 +1,424 @@
+{
+  "version": "0.1.0",
+  "name": "agentfund",
+  "instructions": [
+    {
+      "name": "initializeTreasury",
+      "accounts": [
+        { "name": "treasury", "isMut": true, "isSigner": false },
+        { "name": "owner", "isMut": true, "isSigner": true },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "bump", "type": "u8" }
+      ]
+    },
+    {
+      "name": "createInvoice",
+      "accounts": [
+        { "name": "invoice", "isMut": true, "isSigner": false },
+        { "name": "treasury", "isMut": true, "isSigner": false },
+        { "name": "recipient", "isMut": true, "isSigner": true },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "invoiceId", "type": { "array": ["u8", 32] } },
+        { "name": "amount", "type": "u64" },
+        { "name": "memo", "type": "string" },
+        { "name": "expiresAt", "type": "i64" }
+      ]
+    },
+    {
+      "name": "payInvoice",
+      "accounts": [
+        { "name": "invoice", "isMut": true, "isSigner": false },
+        { "name": "treasury", "isMut": true, "isSigner": false },
+        { "name": "payer", "isMut": true, "isSigner": true },
+        { "name": "recipient", "isMut": true, "isSigner": false },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": []
+    },
+    {
+      "name": "settleBatch",
+      "accounts": [
+        { "name": "batch", "isMut": true, "isSigner": false },
+        { "name": "treasury", "isMut": true, "isSigner": false },
+        { "name": "settler", "isMut": true, "isSigner": true },
+        { "name": "recipient", "isMut": true, "isSigner": false },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "batchId", "type": { "array": ["u8", 32] } },
+        { "name": "invoiceIds", "type": { "vec": { "array": ["u8", 32] } } },
+        { "name": "totalAmount", "type": "u64" }
+      ]
+    },
+    {
+      "name": "openChannel",
+      "accounts": [
+        { "name": "channel", "isMut": true, "isSigner": false },
+        { "name": "channelEscrow", "isMut": true, "isSigner": false },
+        { "name": "partyA", "isMut": true, "isSigner": true },
+        { "name": "partyB", "isMut": false, "isSigner": false },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "channelId", "type": { "array": ["u8", 32] } },
+        { "name": "deposit", "type": "u64" }
+      ]
+    },
+    {
+      "name": "closeChannel",
+      "accounts": [
+        { "name": "channel", "isMut": true, "isSigner": false },
+        { "name": "channelEscrow", "isMut": true, "isSigner": false },
+        { "name": "closer", "isMut": true, "isSigner": true },
+        { "name": "partyA", "isMut": true, "isSigner": false },
+        { "name": "partyB", "isMut": true, "isSigner": false },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "finalBalanceA", "type": "u64" },
+        { "name": "finalBalanceB", "type": "u64" },
+        { "name": "nonce", "type": "u64" }
+      ]
+    },
+    {
+      "name": "registerAgent",
+      "accounts": [
+        { "name": "agentProfile", "isMut": true, "isSigner": false },
+        { "name": "treasury", "isMut": false, "isSigner": false },
+        { "name": "owner", "isMut": true, "isSigner": true },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "name", "type": "string" },
+        { "name": "description", "type": "string" },
+        { "name": "capabilities", "type": { "vec": "string" } },
+        { "name": "basePrice", "type": "u64" },
+        { "name": "bump", "type": "u8" }
+      ]
+    },
+    {
+      "name": "requestService",
+      "accounts": [
+        { "name": "request", "isMut": true, "isSigner": false },
+        { "name": "providerProfile", "isMut": false, "isSigner": false },
+        { "name": "providerOwner", "isMut": false, "isSigner": false },
+        { "name": "escrow", "isMut": true, "isSigner": false },
+        { "name": "requester", "isMut": true, "isSigner": true },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "requestId", "type": { "array": ["u8", 32] } },
+        { "name": "capability", "type": "string" },
+        { "name": "amount", "type": "u64" }
+      ]
+    },
+    {
+      "name": "completeService",
+      "accounts": [
+        { "name": "request", "isMut": true, "isSigner": false },
+        { "name": "providerProfile", "isMut": true, "isSigner": false },
+        { "name": "escrow", "isMut": true, "isSigner": false },
+        { "name": "providerTreasury", "isMut": true, "isSigner": false },
+        { "name": "provider", "isMut": true, "isSigner": false },
+        { "name": "owner", "isMut": false, "isSigner": true },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "resultHash", "type": { "array": ["u8", 32] } }
+      ]
+    },
+    {
+      "name": "initiateDispute",
+      "accounts": [
+        { "name": "request", "isMut": true, "isSigner": false },
+        { "name": "dispute", "isMut": true, "isSigner": false },
+        { "name": "initiator", "isMut": true, "isSigner": true },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "reason", "type": "string" }
+      ]
+    },
+    {
+      "name": "resolveDispute",
+      "accounts": [
+        { "name": "request", "isMut": true, "isSigner": false },
+        { "name": "dispute", "isMut": true, "isSigner": false },
+        { "name": "resolver", "isMut": false, "isSigner": true },
+        { "name": "requester", "isMut": true, "isSigner": false },
+        { "name": "provider", "isMut": true, "isSigner": false },
+        { "name": "escrow", "isMut": true, "isSigner": false },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "resolution", "type": { "defined": "DisputeResolution" } }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Treasury",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "owner", "type": "publicKey" },
+          { "name": "bump", "type": "u8" },
+          { "name": "totalReceived", "type": "u64" },
+          { "name": "totalSettled", "type": "u64" },
+          { "name": "pendingInvoices", "type": "u64" },
+          { "name": "createdAt", "type": "i64" }
+        ]
+      }
+    },
+    {
+      "name": "Invoice",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "id", "type": { "array": ["u8", 32] } },
+          { "name": "recipient", "type": "publicKey" },
+          { "name": "amount", "type": "u64" },
+          { "name": "memo", "type": "string" },
+          { "name": "status", "type": { "defined": "InvoiceStatus" } },
+          { "name": "createdAt", "type": "i64" },
+          { "name": "expiresAt", "type": "i64" },
+          { "name": "paidAt", "type": { "option": "i64" } },
+          { "name": "payer", "type": { "option": "publicKey" } }
+        ]
+      }
+    },
+    {
+      "name": "BatchSettlement",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "id", "type": { "array": ["u8", 32] } },
+          { "name": "recipient", "type": "publicKey" },
+          { "name": "invoiceCount", "type": "u32" },
+          { "name": "totalAmount", "type": "u64" },
+          { "name": "settledAt", "type": "i64" },
+          { "name": "settler", "type": "publicKey" }
+        ]
+      }
+    },
+    {
+      "name": "PaymentChannel",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "id", "type": { "array": ["u8", 32] } },
+          { "name": "partyA", "type": "publicKey" },
+          { "name": "partyB", "type": "publicKey" },
+          { "name": "depositA", "type": "u64" },
+          { "name": "depositB", "type": "u64" },
+          { "name": "balanceA", "type": "u64" },
+          { "name": "balanceB", "type": "u64" },
+          { "name": "nonce", "type": "u64" },
+          { "name": "status", "type": { "defined": "ChannelStatus" } },
+          { "name": "openedAt", "type": "i64" },
+          { "name": "closedAt", "type": { "option": "i64" } }
+        ]
+      }
+    },
+    {
+      "name": "AgentProfile",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "owner", "type": "publicKey" },
+          { "name": "name", "type": "string" },
+          { "name": "description", "type": "string" },
+          { "name": "capabilities", "type": { "vec": "string" } },
+          { "name": "basePrice", "type": "u64" },
+          { "name": "treasury", "type": "publicKey" },
+          { "name": "isActive", "type": "bool" },
+          { "name": "totalRequests", "type": "u64" },
+          { "name": "totalEarnings", "type": "u64" },
+          { "name": "registeredAt", "type": "i64" },
+          { "name": "lastActiveAt", "type": "i64" },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    },
+    {
+      "name": "ServiceRequest",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "id", "type": { "array": ["u8", 32] } },
+          { "name": "requester", "type": "publicKey" },
+          { "name": "provider", "type": "publicKey" },
+          { "name": "capability", "type": "string" },
+          { "name": "amount", "type": "u64" },
+          { "name": "status", "type": { "defined": "RequestStatus" } },
+          { "name": "createdAt", "type": "i64" },
+          { "name": "completedAt", "type": { "option": "i64" } },
+          { "name": "resultHash", "type": { "option": { "array": ["u8", 32] } } }
+        ]
+      }
+    },
+    {
+      "name": "Dispute",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "requestId", "type": { "array": ["u8", 32] } },
+          { "name": "initiator", "type": "publicKey" },
+          { "name": "reason", "type": "string" },
+          { "name": "status", "type": { "defined": "DisputeStatus" } },
+          { "name": "createdAt", "type": "i64" },
+          { "name": "resolvedAt", "type": { "option": "i64" } },
+          { "name": "resolution", "type": { "option": { "defined": "DisputeResolution" } } }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "InvoiceStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          { "name": "Pending" },
+          { "name": "Paid" },
+          { "name": "Expired" },
+          { "name": "Cancelled" }
+        ]
+      }
+    },
+    {
+      "name": "ChannelStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          { "name": "Open" },
+          { "name": "Closing" },
+          { "name": "Closed" },
+          { "name": "Disputed" }
+        ]
+      }
+    },
+    {
+      "name": "RequestStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          { "name": "Pending" },
+          { "name": "InProgress" },
+          { "name": "Completed" },
+          { "name": "Disputed" },
+          { "name": "Refunded" }
+        ]
+      }
+    },
+    {
+      "name": "DisputeStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          { "name": "Open" },
+          { "name": "UnderReview" },
+          { "name": "Resolved" },
+          { "name": "Expired" }
+        ]
+      }
+    },
+    {
+      "name": "DisputeResolution",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          { "name": "RefundRequester" },
+          { "name": "PayProvider" },
+          { "name": "Split", "fields": [{ "name": "requesterPct", "type": "u8" }] }
+        ]
+      }
+    }
+  ],
+  "events": [
+    {
+      "name": "InvoiceCreated",
+      "fields": [
+        { "name": "invoiceId", "type": { "array": ["u8", 32] }, "index": false },
+        { "name": "recipient", "type": "publicKey", "index": true },
+        { "name": "amount", "type": "u64", "index": false },
+        { "name": "expiresAt", "type": "i64", "index": false }
+      ]
+    },
+    {
+      "name": "InvoicePaid",
+      "fields": [
+        { "name": "invoiceId", "type": { "array": ["u8", 32] }, "index": false },
+        { "name": "payer", "type": "publicKey", "index": true },
+        { "name": "amount", "type": "u64", "index": false }
+      ]
+    },
+    {
+      "name": "BatchSettled",
+      "fields": [
+        { "name": "batchId", "type": { "array": ["u8", 32] }, "index": false },
+        { "name": "invoiceCount", "type": "u32", "index": false },
+        { "name": "totalAmount", "type": "u64", "index": false },
+        { "name": "recipient", "type": "publicKey", "index": true }
+      ]
+    },
+    {
+      "name": "ServiceRequested",
+      "fields": [
+        { "name": "requestId", "type": { "array": ["u8", 32] }, "index": false },
+        { "name": "requester", "type": "publicKey", "index": true },
+        { "name": "provider", "type": "publicKey", "index": true },
+        { "name": "capability", "type": "string", "index": false },
+        { "name": "amount", "type": "u64", "index": false }
+      ]
+    },
+    {
+      "name": "ServiceCompleted",
+      "fields": [
+        { "name": "requestId", "type": { "array": ["u8", 32] }, "index": false },
+        { "name": "provider", "type": "publicKey", "index": true },
+        { "name": "amount", "type": "u64", "index": false }
+      ]
+    },
+    {
+      "name": "DisputeInitiated",
+      "fields": [
+        { "name": "requestId", "type": { "array": ["u8", 32] }, "index": false },
+        { "name": "initiator", "type": "publicKey", "index": true },
+        { "name": "reason", "type": "string", "index": false }
+      ]
+    },
+    {
+      "name": "DisputeResolved",
+      "fields": [
+        { "name": "requestId", "type": { "array": ["u8", 32] }, "index": false },
+        { "name": "resolution", "type": { "defined": "DisputeResolution" }, "index": false }
+      ]
+    }
+  ],
+  "errors": [
+    { "code": 6000, "name": "MemoTooLong", "msg": "Memo exceeds maximum length" },
+    { "code": 6001, "name": "InvalidAmount", "msg": "Invalid amount" },
+    { "code": 6002, "name": "InvalidExpiry", "msg": "Invalid expiry time" },
+    { "code": 6003, "name": "InvoiceNotPending", "msg": "Invoice is not in pending status" },
+    { "code": 6004, "name": "InvoiceExpired", "msg": "Invoice has expired" },
+    { "code": 6005, "name": "BatchTooLarge", "msg": "Batch exceeds maximum size" },
+    { "code": 6006, "name": "EmptyBatch", "msg": "Batch cannot be empty" },
+    { "code": 6007, "name": "ChannelNotOpen", "msg": "Channel is not open" },
+    { "code": 6008, "name": "InvalidNonce", "msg": "Invalid state nonce" },
+    { "code": 6009, "name": "BalanceMismatch", "msg": "Final balances do not match total deposits" },
+    { "code": 6010, "name": "AgentNotActive", "msg": "Agent is not active" },
+    { "code": 6011, "name": "CapabilityNotSupported", "msg": "Capability not supported by provider" },
+    { "code": 6012, "name": "CannotDispute", "msg": "Cannot dispute this request" },
+    { "code": 6013, "name": "DisputeWindowClosed", "msg": "Dispute window has closed" },
+    { "code": 6014, "name": "DisputeNotOpen", "msg": "Dispute is not open" },
+    { "code": 6015, "name": "InvalidSplitPct", "msg": "Invalid split percentage" }
+  ],
+  "metadata": {
+    "address": "5LqS68L9kfrB5h2D3NjJ9d8jEJz7egkyXUWEySGNZUeg"
+  }
+}
